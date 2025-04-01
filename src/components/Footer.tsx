@@ -6,33 +6,40 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="bg-secondary mt-auto">
-      <div className="container mx-auto px-4 py-8">
+    <footer className="bg-secondary mt-auto border-t">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-4 md:mb-0">
-            <span className="font-bold text-lg">Jorian Bracke</span>
+          <div>
+            <span className="text-sm text-muted-foreground">
+              &copy; {currentYear} Jorian Bracke. Alle rechten voorbehouden.
+            </span>
           </div>
           
-          <div className="flex space-x-4 mb-4 md:mb-0">
-            <Button variant="ghost" size="icon" asChild>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                <Instagram className="h-5 w-5" />
-              </a>
-            </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                <Linkedin className="h-5 w-5" />
-              </a>
-            </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                <Github className="h-5 w-5" />
-              </a>
-            </Button>
-          </div>
-          
-          <div className="text-sm text-muted-foreground">
-            &copy; {currentYear} Jorian Bracke. Alle rechten voorbehouden.
+          <div className="flex items-center space-x-6 mt-4 md:mt-0">
+            <a 
+              href="https://linkedin.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              aria-label="LinkedIn"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              LinkedIn
+            </a>
+            <a 
+              href="https://github.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              aria-label="GitHub"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              GitHub
+            </a>
+            <a 
+              href="/contact" 
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Contact
+            </a>
           </div>
         </div>
       </div>

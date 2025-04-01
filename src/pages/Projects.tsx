@@ -28,11 +28,18 @@ export default function Projects() {
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
-      // Filter by search query
+      // Get category labels for text search
+      const categoryLabels = project.categories.map(cat => {
+        const categoryObj = categories.find(c => c.value === cat);
+        return categoryObj ? categoryObj.label.toLowerCase() : "";
+      });
+      
+      // Filter by search query (title, description, or category labels)
       const matchesSearch =
         searchQuery === "" ||
         project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        project.description.toLowerCase().includes(searchQuery.toLowerCase());
+        project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        categoryLabels.some(label => label.includes(searchQuery.toLowerCase()));
 
       // Filter by categories
       const matchesCategories =
@@ -66,7 +73,7 @@ export default function Projects() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Zoek projecten..."
+                  placeholder="Zoek projecten of categorieën..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
