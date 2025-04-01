@@ -17,7 +17,7 @@ export default function CategoryBadge({ category, className }: CategoryBadgeProp
           "bg-[#e1f6ff] text-[#0072b1]": category === "development",
           "bg-[#e7f7e7] text-[#00813c]": category === "design",
           "bg-[#fff4dd] text-[#cc8b00]": category === "research",
-          "bg-[#e1f6ff] text-[#0072b1]": category === "data",
+          "bg-[#f0e5ff] text-[#5c21d8]": category === "data",
         },
         className
       )}

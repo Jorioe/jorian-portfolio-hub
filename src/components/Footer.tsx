@@ -1,13 +1,13 @@
 
 import { Github, Instagram, Linkedin } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   
   return (
     <footer className="bg-secondary mt-auto border-t">
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div>
             <span className="text-sm text-muted-foreground">
@@ -23,7 +23,7 @@ export default function Footer() {
               aria-label="LinkedIn"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              LinkedIn
+              <Linkedin size={20} />
             </a>
             <a 
               href="https://github.com" 
@@ -32,13 +32,16 @@ export default function Footer() {
               aria-label="GitHub"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              GitHub
+              <Github size={20} />
             </a>
             <a 
-              href="/contact" 
+              href="https://instagram.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              aria-label="Instagram"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              Contact
+              <Instagram size={20} />
             </a>
           </div>
         </div>
