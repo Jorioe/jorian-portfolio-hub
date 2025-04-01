@@ -113,15 +113,16 @@ export default function Projects() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredProjects.map((project) => (
-                <div
+                <Link
                   key={project.id}
-                  className="bg-card border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                  to={`/projects/${project.id}`}
+                  className="bg-card border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
                 >
                   <div className="aspect-video bg-muted relative overflow-hidden">
                     <img
                       src={project.image}
                       alt={project.title}
-                      className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
                     />
                   </div>
                   <div className="p-6">
@@ -141,14 +142,9 @@ export default function Projects() {
                       <span className="text-sm text-muted-foreground">
                         {project.date}
                       </span>
-                      <Button asChild variant="outline" size="sm">
-                        <Link to={`/projects/${project.id}`}>
-                          Details
-                        </Link>
-                      </Button>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
