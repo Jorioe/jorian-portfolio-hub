@@ -1,0 +1,116 @@
+/* Skills Section Styles */
+.skills-section {
+    padding: 4rem 0;
+    background-color: var(--card-background);
+  }
+  
+  .container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .skills-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .skills-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--primary-color);
+  }
+  
+  .skills-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--foreground-color);
+  }
+  
+  .skills-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  @media (min-width: 768px) {
+    .skills-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  .skills-card {
+    background-color: var(--background-color);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+  }
+  
+  .category-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--foreground-color);
+    margin-bottom: 1rem;
+  }
+  
+  .skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .skill-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 9999px;
+    border: 1px solid var(--border-color);
+  }
+  
+  /* Badge color variations */
+  .programming-badge {
+    background-color: #e6f0ff;
+    color: #0066cc;
+  }
+  
+  .design-badge {
+    background-color: #f3e6ff;
+    color: #6600cc;
+  }
+  
+  .data-badge {
+    background-color: #e6fff0;
+    color: #00994d;
+  }
+  
+  .soft-skills-badge {
+    background-color: #fff8e6;
+    color: #cc7700;
+  }
+  
+  /* Dark theme colors */
+  :root[class*="dark"] .programming-badge {
+    background-color: #0a3569;
+    color: #a8c7f7;
+  }
+  
+  :root[class*="dark"] .design-badge {
+    background-color: #330666;
+    color: #d9b3ff;
+  }
+  
+  :root[class*="dark"] .data-badge {
+    background-color: #06381e;
+    color: #a8e6c1;
+  }
+  
+  :root[class*="dark"] .soft-skills-badge {
+    background-color: #664004;
+    color: #ffd580;
+  }

@@ -1,0 +1,32 @@
+/* Form styling to ensure only error messages are red, not labels */
+.form-label {
+  color: inherit; /* Keep labels in default color */
+}
+
+.form-error {
+  color: hsl(var(--destructive)); /* Make error messages red using the theme color */
+  font-size: 0.875rem;
+}
+
+/* Ensure inputs with errors have a red border */
+.form-item:has(.form-error:not(:empty)) input,
+.form-item:has(.form-error:not(:empty)) textarea {
+  border-color: hsl(var(--destructive));
+}
+
+/* Verwijder blauwe outline bij focus */
+.form-item input:focus,
+.form-item textarea:focus {
+  outline: none;
+  border-color: hsl(var(--border));
+  box-shadow: none;
+  ring-offset-color: transparent;
+}
+
+/* Aangepaste focus stijl zonder blauwe outline */
+.form-item input:focus-visible,
+.form-item textarea:focus-visible {
+  outline: none;
+  border-color: hsl(var(--border));
+  box-shadow: none;
+} 
