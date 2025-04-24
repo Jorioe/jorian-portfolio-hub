@@ -2,27 +2,47 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Github, ExternalLink, Instagram } from "lucide-react";
 import CategoryBadge from "@/components/CategoryBadge";
-import { projects } from "@/data/projects";
 import { useEffect, useState } from "react";
+import { useProjects } from "@/lib/ProjectContext";
+import { CategoryType } from "@/data/projects";
 
 export default function ProjectDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [notFound, setNotFound] = useState(false);
+  const { projects, loading } = useProjects();
+  
+  // Veilig decoderen van de project ID
+  const safeId = id ? decodeURIComponent(id) : '';
+  
+  // Vind het project
+  const project = projects.find((p) => p.id === safeId);
+
+  useEffect(() => {
+    // Als de projecten geladen zijn en het project niet gevonden is
+    if (!loading && !project) {
+      setNotFound(true);
+    }
+  }, [project, loading]);
+
+  if (notFound) {
+    return (
+      <div className="container py-16 text-center">
+        <h1 className="text-3xl font-bold mb-4">Project niet gevonden</h1>
+        <p className="mb-6">Het project dat je zoekt bestaat niet of is verwijderd.</p>
+        <Button onClick={() => navigate("/projects")}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Terug naar Projecten
+        </Button>
+      </div>
+    );
+  }
+
+  if (!project) return <div className="container py-16">Laden...</div>;
 
   const [showModal, setShowModal] = useState(false);
   const [modalImage, setModalImage] = useState("");
   const [zoom, setZoom] = useState(1);
   const [transformOrigin, setTransformOrigin] = useState("center center");
-
-  const project = projects.find((p) => p.id === id);
-
-  useEffect(() => {
-    if (!project) {
-      navigate("/projects", { replace: true });
-    }
-  }, [project, navigate]);
-
-  if (!project) return null;
 
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();

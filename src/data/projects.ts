@@ -1,4 +1,3 @@
-
 export type CategoryType = "development" | "design" | "research" | "data" | "rest";
 
 export interface Project {
@@ -6,10 +5,26 @@ export interface Project {
   title: string;
   description: string;
   image: string;
-  // image2: string;
   categories: CategoryType[];
   date: string;
-  content: Array<{ type: "text" | "break" | "subtitle" | "small-subtitle" | "quote-top" | "quote" | "quote-bottom"; content: string ; content2?: string }>;
+  content: Array<{
+    type:
+      | "text"
+      | "break"
+      | "subtitle"
+      | "small-subtitle"
+      | "quote-top"
+      | "quote"
+      | "quote-bottom"
+      | "opsom-text-top"
+      | "opsom-text"
+      | "opsom-text-bottom"
+      | "flex-text"
+      | "image";
+    content?: string;
+    content2?: string;
+    image?: string;
+  }>;
   aditionalContent?: string;
   imgtext?: string;
   imgtext2?: string;
@@ -25,75 +40,72 @@ export const projects: Project[] = [
   {
     id: "1",
     title: "SNOTYOUNG",
-    description: "Het oplossen van de conversieproblemen van Snotyoung en het maken van een nieuwe website",
+    description:
+      "Het oplossen van de conversieproblemen van Snotyoung en het maken van een nieuwe website",
     image: "/img/SY-BG-edit2.png",
     categories: ["design", "research", "data"],
     date: "Juli 2024",
     content: [
       { type: "subtitle", content: "Wat is Snotyoung?" },
-      { type: "text", content: "Bij Snotyoung staat een gedurfde filosofie centraal: veiligheid op de eerste plaats is nooit de weg naar het verwezenlijken van je dromen. Avontuur vormt de basis van alles wat ze doen. Ze omarmen het belang van kwaliteit en expertise, terwijl ze tegelijkertijd het idee koesteren dat werk (en leven) alleen opwindend zal zijn als je bereid bent risico's te nemen. Snotyoung is toegewijd aan het creëren van boeiende visuele verhalen, variërend van fotografie en videoproductie tot conceptontwikkeling." },
-      { type: "text", content: "Hiernaast is Snotyoung een nieuw gelanceerd streetwear-label voor mannen. De eerste batch bestaat uit onmisbare basics in verrassende kleurstellingen, maar de filosofie bestaat uit nog veel meer. Snotyoung vraagt een jongere generatie om haar dromen te volgen. De oprichters van het merk zijn een stel jonge creatievelingen die besloten hun krachten te bundelen. Ze hadden de drang om zich te verenigen en een gedeelde ideologie tot uitdrukking te brengen. Zonder enige relevante ervaring in de mode-industrie, maar met één doel gemeenschappelijk, begonnen ze aan hun avontuur. Ze willen zich onderscheiden van de massa door een moedige beweging te creëren. Het streetwearlabel Snotyoung is die ongehoorzame nieuwe buurjongen die je hart meteen verovert door zijn oprechtheid en enthousiasme." },
-      { type: "break", content: "" }, // Witregel toevoegen
-      { type: "subtitle", content: "De opdracht" }, // Nog een subtitel
-      { type: "text", content: "Snotyoung bevindt zich momenteel in een fase waarin de website veel verkeer genereert, maar niet effectief leidt tot conversies, met name sales. Veel bezoekers lijken af te haken zonder de gewenste acties te ondernemen. Dit fenomeen duidt op een potentieel conversieprobleem dat moet worden aangepakt. Waar gaat dit mis?" },
-      { type: "text", content: "Het identificeren van het conversieprobleem op de website is cruciaal om de kansen voor sales te vergroten. Het is een kans om de website zo in te richten dat het niet alleen aantrekkelijk is voor bezoekers, maar hen ook aanzet tot de gewenste acties, namelijk aankoop." },
-      { type: "text", content: "De opdracht is om ervoor te zorgen dat de conversieproblemen van Snotyoung worden onderzocht en opgelost door het verbeteren van de huidige website of het maken van een nieuwe website." },
-      { type: "break", content: "" }, // Witregel toevoegen
+      { type: "text", content: "Bij Snotyoung staat een gedurfde filosofie centraal..." },
+      { type: "text", content: "Hiernaast is Snotyoung een nieuw gelanceerd streetwear-label..." },
+      { type: "break" },
+      { type: "subtitle", content: "De opdracht" },
+      { type: "text", content: "Snotyoung bevindt zich momenteel in een fase waarin..." },
+      { type: "text", content: "Het identificeren van het conversieprobleem..." },
+      { type: "text", content: "De opdracht is om ervoor te zorgen..." },
+      { type: "break" },
       { type: "subtitle", content: "Aanpak en Resultaat" },
-      { type: "text", content: "Het conversieprobleem van Snotyoung vraagt om een diepgaand onderzoek om de knelpunten te identificeren en effectieve oplossingen te vinden. Allereerst heb ik een hoofdvraag en deelvragen opgesteld:" },
-      { type: "small-subtitle", content: "Hoofdvraag:" }, // Nog een kleine subtitel
-      { type: "opsom-text-top", content: "• Hoe kan ik de conversie op de Snotyoung-website verbeteren om bezoeken om te zetten in sales voor Snotyoung?" },
-      { type: "small-subtitle", content: "Deelvragen" }, // Nog een kleine subtitel
-      { type: "opsom-text-top", content: "• Wat zijn de specifieke knelpunten die leiden tot een lage conversie op de Snotyoung-website?" },    
-      { type: "opsom-text", content: "• Hoe ervaren bezoekers de huidige gebruikersinterface en navigatie op de website?" },    
-      { type: "opsom-text", content: "• In hoeverre sluit de huidige inhoud aan op de behoeften en verwachtingen van de bezoekers?" },
-      { type: "opsom-text", content: "• Hebben technische aspecten, zoals laadtijd en responsiviteit, invloed op de conversie?" },
-      { type: "opsom-text-bottom", content: "• Hoe dragen visuele elementen bij aan de conversie of belemmeren ze de conversie?" },
-      { type: "text", content: "Voor onderzoek naar de conversie van Snotyoung ben ik begonnen met het bekijken van de statistieken van de website. Hierin is te zien dat Snotyoung in 90 dagen 3.656 unieke websitebezoekers heeft gehad, waarvan maar 32 bestellingen. Dat is een percentage van 0,84%, terwijl de gemiddelde conversie in de fashion branche ligt tussen de 1,61 en 2,77%." },
-      { type: "image", content: "/img/SY-stat.png", content2: "/img/SY-stat-2.png"  },
-      { type: "text", content:"Om de conversie van Snotyoung te verhogen ben ik allereest onderzoek gaan doen naar de gebruikerservaring van Snotyoung. Om meer te weten te komen over de gebruikerservaring van de website heb ik een enquête uitgestuurd met vragen over het uiterlijk van de website. Hieruit is het volgende gekomen: Uit de enquête bleek dat de ondervraagden vooral vonden dat de website een basic uitstraling heeft met weinig eigen stijl. Wel vonden ze de website makkelijk navigeren, maar dit omdat er niet veel opties waren om heen te gaan op de website." },
-      { type: "text", content: "Ook heb ik een plugin op de huidige website geïnstalleerd die de activiteit van bezoekers bekijkt en opneemt gedurende 2 weken. Hiermee kan ik zien welke pagina’s de bezoekers bekijken, waar ze op klikken, tot hoever ze scrollen etc. Dit is essentiële data die ik kan gebruiken bij het maken van de nieuwe website en het verbeteren van de gebruikerservaring. Het geeft bijvoorbeeld waardevolle inzichten over hoe bezoekers de website gebruiken en eventuele knelpunten en problemen op de website (bijv. onduidelijke navigatie)." },
-      { type: "text", content: "Hieruit heb ik de volgende data verkregen. In de heatmaps is te zien dat maar 10% van de bezoekers de onderkant van de homepagina bereikt. Ook is te zien dat er vooral geklikt wordt op \"store\" (maar dit is de homepagina) en op \"about\". Hier is te zien dat veel bezoekers niet scrollen op de \"about\" pagina, maar weer klikken op \"store\". Als we kijken naar een samenvatting van alle verkregen data met deze plugin, is te zien dat de gemiddelde tijd op een pagina 59 seconden is, bezoekers gemiddeld maar tot 52,4% scrollen en dat 34,8% de website verlaat na 1 pagina te hebben bekeken. Wat betekent dit?" },
-      { type: "opsom-text", content: "• Slechts 10% van de bezoekers bereikt de onderkant van de homepagina. Dit betekent dat de meeste bezoekers hun informatiebehoeften vervullen zonder helemaal naar beneden te scrollen of dat ze snel afhaken." },    
-      { type: "opsom-text", content: "• Het feit dat \"store\" de homepagina is en veel bezoekers daarop klikken, kan erop wijzen dat ze niet doorhebben dat ze al op de homepagina/store zijn. Dit kan verwarrend zijn en leidt mogelijk tot een slechte gebruikerservaring." },    
-      { type: "opsom-text", content: "• Veel bezoekers scrollen niet op de \"about\" pagina en klikken snel weer terug naar \"store\". Dit kan betekenen dat de inhoud of opmaak van de \"about\" pagina niet genoeg boeit of relevantie biedt voor de bezoekers." },
-      { type: "opsom-text-bottom", content: "• 34,8% van de bezoekers verlaat de website na het bekijken van slechts één pagina. Dit betekent dat een aanzienlijk deel van de bezoekers niet vindt wat ze zoeken of niet wordt aangespoord om verder te navigeren." },
-      { type: "text", content: "Na het verkrijgen van deze data ben ik door middel van biebonderzoek gaan kijken naar hoe andere streetwear merken hun website hebben ingericht, om zo inspiratie op te doen voor de nieuwe website van Snotyoung. Bij de merken die een paar producten op de homepagina hebben staan is te zien dat de fotografie van de kleding van hoge kwaliteit, maar ook simpel is (kledingstuk met effen achtergrond). Ook is te zien dat op elke onderzochte website sfeerfoto's van het merk staan. Dit laat de stijl van het merk zien en creëert een bepaalde sfeer op de website. Geen enkel merk heeft gelijk alle producten op de homepagina staan, maar hebben een \"store\" pagina waar alle producten te vinden zijn. Hierop is het mogelijk om te filteren op bijvoorbeeld categorie, prijs of maat. Hiernaast heeft elke website een footer met informatie of handige links en kun je bij de meeste een account aanmaken." },
-      { type: "text", content: "Om nog meer te weten te komen over de gebruikerservaring van de Snotyoung website heb ik een tweede enquête uitgestuurd. Dit keer met vragen over of ze iets zouden kopen op de website en waarom wel of niet. Ook stelde ik de vraag hoe ze de gebruikerservaring op de website zouden beoordelen en of er aspecten zijn van het websiteontwerp of de functionaliteiten die ze als frustrerend ervaren. Hieruit is gekomen dat maar liefst 69,2% van de ondervraagden niets zou kopen op de Snotyoung-website. De voornaamste redenen hiervoor zijn: onaantrekkelijke productfotografie/presentatie van de kledingstukken, onduidelijke website lay-out/navigatie en gebrek aan duidelijke informatie over het bedrijf waardoor het onbetrouwbaar overkomt. Het gemiddelde cijfer dat de ondervraagden de website zouden geven is een 6,1." },
-      { type: "text", content: "Op de vraag of er nog aspecten zijn van het websiteontwerp of de functionaliteiten die ze frustreren kwamen de volgende antwoorden:"},
-      { type: "quote-top", content: "• \"Het afbeelden van gekreukelde kleding wekt voor mij de suggestie dat de kwaliteit van de kleding te wensen overlaat.\""},
-      { type: "quote", content: "• \"Ik werd niet echt getriggerd om iets te kopen omdat ik niet het \"wauw gevoel\" kreeg, de producten worden ver onder de maat gepresenteerd.\""},
-      { type: "quote", content: "• \"Ik mis een duidelijke zoekfunctie voor de producten.\""},
-      { type: "quote-bottom", content: "• \"Eindeloos scrollen naar beneden met soortgelijke producten is geen fijne ervaring.\""},
-      { type: "text", content: "Als laatst stelde ik de vraag of er nog functies of elementen zijn die ze missen op de website. Hieruit kwamen de volgende punten:" },
-      { type: "opsom-text", content: "• Meer foto's (van het merk)" },    
-      { type: "opsom-text", content: "• Website heeft geen footer" },    
+      { type: "text", content: "Het conversieprobleem vraagt om diepgaand onderzoek..." },
+      { type: "small-subtitle", content: "Hoofdvraag:" },
+      { type: "opsom-text-top", content: "• Hoe kan ik de conversie op de website verbeteren..." },
+      { type: "small-subtitle", content: "Deelvragen" },
+      { type: "opsom-text-top", content: "• Wat zijn de specifieke knelpunten..." },
+      { type: "opsom-text", content: "• Hoe ervaren bezoekers..." },
+      { type: "opsom-text", content: "• In hoeverre sluit de inhoud aan..." },
+      { type: "opsom-text", content: "• Hebben technische aspecten invloed..." },
+      { type: "opsom-text-bottom", content: "• Hoe dragen visuele elementen bij..." },
+      { type: "text", content: "Voor onderzoek naar de conversie van Snotyoung..." },
+      { type: "image", content: "/img/SY-stat.png", content2: "/img/SY-stat-2.png" },
+      { type: "text", content: "Om de conversie van Snotyoung te verhogen..." },
+      { type: "text", content: "Ook heb ik een plugin op de huidige website..." },
+      { type: "text", content: "Hieruit heb ik de volgende data verkregen..." },
+      { type: "opsom-text", content: "• Slechts 10% van de bezoekers bereikt..." },
+      { type: "opsom-text", content: "• Het feit dat 'store' de homepagina is..." },
+      { type: "opsom-text", content: "• Veel bezoekers scrollen niet op de 'about' pagina..." },
+      { type: "opsom-text-bottom", content: "• 34,8% van de bezoekers verlaat de website..." },
+      { type: "text", content: "Na het verkrijgen van deze data..." },
+      { type: "text", content: "Om nog meer te weten te komen..." },
+      { type: "text", content: "Op de vraag of er nog aspecten..." },
+      { type: "quote-top", content: "• \"Het afbeelden van gekreukelde kleding...\"" },
+      { type: "quote", content: "• \"Ik werd niet echt getriggerd...\"" },
+      { type: "quote", content: "• \"Ik mis een duidelijke zoekfunctie...\"" },
+      { type: "quote-bottom", content: "• \"Eindeloos scrollen naar beneden...\"" },
+      { type: "text", content: "Als laatst stelde ik de vraag..." },
+      { type: "opsom-text", content: "• Meer foto's (van het merk)" },
+      { type: "opsom-text", content: "• Website heeft geen footer" },
       { type: "opsom-text", content: "• Filterfunctie bij producten" },
-      { type: "opsom-text", content: "• Meer eigenheid" },    
+      { type: "opsom-text", content: "• Meer eigenheid" },
       { type: "opsom-text", content: "• Meer informatie over het bedrijf" },
       { type: "opsom-text-bottom", content: "• Een zoekbalk om producten te kunnen zoeken" },
-      { type: "text", content: "Toen ben ik biebonderzoek gaan doen naar hoe ik de websiteconversie kan verhogen. Uit dit onderzoek is bijvoorbeeld gebleken dat het hebben van hoogwaardige productfoto's en video's een cruciale rol kan spelen bij het overtuigen van bezoekers om een aankoop te doen. Daarnaast is het handig dat bezoekers een account aan kunnen maken om zo bijvoorbeeld e-mails over achtergelaten winkelwagentjes te kunnen sturen. Met deze informatie ben ik gaan brainstormen over dingen die ik zou kunnen toevoegen aan de nieuwe website. Ik heb deze ideeën geordend en geanalyseerd door deze te verwerken in een mindmap en een SWOT-analyse. Om inspiratie te krijgen voor het design van de website heb ik een moodboard gemaakt. Hiervoor heb ik gekeken naar andere streetwear websites en inspiratie opgedaan via behance." },
-      { type: "text", content: "Toen ben ik nieuwe foto's van de kleding gaan schieten. Eerst een voorbeeld van hoe de foto's er op de website eerst uizagen, en daarnaast het resultaat van de nieuwe foto's na wat nabewerking in Photoshop."},
-      { type: "image", content: "/img/SY-kl-1.png", content2: "/img/SY-kl-2.png"  },
-      { type: "break", content: "" }, // Witregel toevoegen
+      { type: "text", content: "Toen ben ik biebonderzoek gaan doen..." },
+      { type: "text", content: "Toen ben ik nieuwe foto's gaan schieten..." },
+      { type: "image", content: "/img/SY-kl-1.png", content2: "/img/SY-kl-2.png" },
+      { type: "break" },
       { type: "subtitle", content: "Resultaten" },
-      { type: "flex-text", content: "Nadat de website is live gegaan ben ik gaan kijken hoe deze nu presteert en of er verbetering is ten opzichte van de oude website. Hiervoor neem ik de data van de afgelopen 30 dagen aangezien de website nog geen 90 dagen live is. Allereerst ben ik gaan kijken of er een verschil is in de vindbaarheid op Google. Hiervoor heb ik de zoekwoorden \"streetwear\" en \"snotyoung\" gebruikt. Hiernaast kun je zien dat de positie op Google bij het zoekwoord \"snotyoung\" 0,1 positie is gestegen. Ook is er een stijging van 15% in het aantal kliks naar de website, en een stijging van 18% in het aantal vertoningen.",
-        image: "/img/SY-stat-3.png"},
-      { type: "flex-text", content: "Vervolgens ben ik gaan kijken bij \"streetwear\". Hiernaast zie je dat de website van Snotyoung maar liefst 41,3 posities is gestegen ten opzichte van de oude website. Ook is er een stijging van 900% in het aantal kliks naar de website, en een stijging van 319% in het aantal vertoningen.",
-        image: "/img/SY-stat-4.png" },
-      { type: "flex-text", content: "Als laatste ben ik gaan kijken bij de statistieken van Wix zelf. Hierbij heb ik gekeken naar de statistieken van de sales om te kijken of de conversie is gestegen. Hiernaast is te zien dat de conversie van 0,84% naar 1% is gestegen. Dit is een stijging van 19%.",
-        image: "/img/SY-stat-5.png" },
-      { type: "break", content: "" }, // Witregel toevoegen
+      { type: "flex-text", content: "Nadat de website live is gegaan...", image: "/img/SY-stat-3.png" },
+      { type: "flex-text", content: "Vervolgens ben ik gaan kijken...", image: "/img/SY-stat-4.png" },
+      { type: "flex-text", content: "Als laatste ben ik gaan kijken...", image: "/img/SY-stat-5.png" },
+      { type: "break" },
       { type: "subtitle", content: "Conclusie" },
-      { type: "text", content: "et optimalisatieproces van de Snotyoung-website heeft duidelijke verbeteringen opgeleverd. Door onderzoek, het analyseren van gebruikersgedrag en het implementeren van gerichte aanpassingen is de website niet alleen gebruiksvriendelijker geworden, maar ook beter vindbaar en aantrekkelijker voor potentiële klanten. Hoewel de resultaten tot nu toe positief zijn, is het belangrijk om te blijven optimaliseren en verbeteren. Tot slot heb ik daarom enkele aanbevelingen voor de toekomst:" },
-      { type: "opsom-text", content: "• Blijf de prestaties van de website nauwlettend volgen met behulp van Google Analytics en Wix-statistieken." },
-      { type: "opsom-text", content: "• Blijf werken aan de SEO-strategie om de vindbaarheid van de website verder te verbeteren." },    
-      { type: "opsom-text", content: "• Verhoog de inzet van marketingstrategieën zoals e-mailmarketing en sociale media om meer verkeer naar de website te leiden." },
-      { type: "opsom-text-bottom", content: "• Gebruik gerichte advertenties en promoties om nieuwe klanten aan te trekken en de naamsbekendheid te vergroten." },
+      { type: "text", content: "Het optimalisatieproces van de Snotyoung-website..." },
+      { type: "opsom-text", content: "• Blijf de prestaties van de website..." },
+      { type: "opsom-text", content: "• Blijf werken aan de SEO-strategie..." },
+      { type: "opsom-text", content: "• Verhoog de inzet van marketingstrategieën..." },
+      { type: "opsom-text-bottom", content: "• Gebruik gerichte advertenties en promoties..." }
     ],
     technologies: ["Wix", "Hotjar", "Photoshop", "HTML", "CSS"],
     skills: ["Figma", "UI/UX", "Data Analysis", "User Testing", "Google Analytics"],
-    // githubLink: "https://github.com",
     demoLink: "https://www.snotyoung.store/"
   },
   {

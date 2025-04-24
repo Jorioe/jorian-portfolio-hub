@@ -1,10 +1,16 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import CategoryBadge from "@/components/CategoryBadge";
+import { CategoryType } from "@/data/projects";
+import { useProjects } from "@/lib/ProjectContext";
 
 export default function Home() {
+  const { projects, loading } = useProjects();
+  
+  // Toon alleen de eerste 3 projecten op de homepage
+  const featuredProjects = projects.slice(0, 3);
+
   const skills = [
     { category: "development" as const, items: ["JavaScript", "TypeScript", "React", "HTML/CSS"] },
     { category: "design" as const, items: ["UI/UX Design", "Figma", "Adobe XD", "Responsive Design"] },
@@ -115,6 +121,40 @@ export default function Home() {
                 </ul>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Projects Section */}
+      <section className="py-16 bg-background">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-2">Recente Projecten</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Een selectie van mijn meest recente projecten. Bekijk mijn complete
+              portfolio voor meer.
+            </p>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12">Projecten laden...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredProjects.map((project) => (
+                <div key={project.id} className="bg-card rounded-lg p-6 shadow-sm">
+                  <h3 className="text-xl font-bold mb-2">{project.title}</h3>
+                  <p className="text-sm text-muted-foreground">{project.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-12 text-center">
+            <Button asChild>
+              <Link to="/projects" className="flex items-center gap-2">
+                Bekijk alle projecten <ArrowRight size={16} />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

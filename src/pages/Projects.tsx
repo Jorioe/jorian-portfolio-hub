@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import CategoryBadge from "@/components/CategoryBadge";
-import { projects, CategoryType } from "@/data/projects";
+import { CategoryType } from "@/data/projects";
+import { useProjects } from "@/lib/ProjectContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Projects() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>([]);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const { projects, loading } = useProjects();
 
   const categories: { label: string; value: CategoryType }[] = [
     { label: "Ontwikkeling", value: "development" },
@@ -60,7 +62,7 @@ export default function Projects() {
       const dateB = new Date(b.date).getTime();
       return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
     });
-  }, [searchQuery, selectedCategories, sortOrder]);
+  }, [searchQuery, selectedCategories, sortOrder, projects]);
 
   const handleSortChange = (value: string) => {
     setSortOrder(value as "newest" | "oldest");
