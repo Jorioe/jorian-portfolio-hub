@@ -158,19 +158,20 @@ export default function AdminDashboard() {
                                 // Speciale route voor Snotyoung project
                                 if (project.id === "1") {
                                   navigate(`/dashboard/project/snotyoung`);
-                                } else {
-                                  try {
-                                    // Codeer de project ID voor het geval er speciale tekens in zitten
-                                    const encodedId = encodeURIComponent(project.id);
-                                    navigate(`/dashboard/project/${encodedId}`);
-                                  } catch (error) {
-                                    console.error("Error encoding project ID:", error);
-                                    toast({
-                                      title: "Fout",
-                                      description: "Er is een fout opgetreden bij het navigeren naar het project.",
-                                      variant: "destructive"
-                                    });
-                                  }
+                                  return;
+                                } 
+                                
+                                try {
+                                  // Codeer de project ID voor het geval er speciale tekens in zitten
+                                  const encodedId = encodeURIComponent(project.id);
+                                  navigate(`/dashboard/project/${encodedId}`);
+                                } catch (error) {
+                                  console.error("Error encoding project ID:", error);
+                                  toast({
+                                    title: "Fout",
+                                    description: "Er is een fout opgetreden bij het navigeren naar het project.",
+                                    variant: "destructive"
+                                  });
                                 }
                               }}>
                                 <Edit size={16} className="mr-2" /> Bewerken

@@ -86,26 +86,10 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
   // Gebruik de specialProjectId als die is meegegeven, anders gebruik de URL parameter
   const effectiveId = specialProjectId || id;
   
-  // Veilig decoderen van de id parameter
-  const safeId = React.useMemo(() => {
-    try {
-      // Als een specialProjectId is meegegeven, gebruik die direct
-      if (specialProjectId) return specialProjectId;
-      
-      return effectiveId ? decodeURIComponent(effectiveId) : 'new';
-    } catch (error) {
-      console.error('Error decoding URI:', error);
-      // Toon een foutmelding aan de gebruiker
-      toast({
-        variant: 'destructive',
-        title: 'Fout bij laden',
-        description: 'Er is een probleem opgetreden bij het laden van het project. Probeer het opnieuw.'
-      });
-      // Na een korte vertraging terugnavigeren
-      setTimeout(() => navigate('/dashboard'), 1500);
-      return 'error';
-    }
-  }, [effectiveId, specialProjectId, navigate, toast]);
+  // Vereenvoudigd: vermijd alle decodering problemen
+  const safeId = specialProjectId ? specialProjectId : 
+                 effectiveId === "snotyoung" ? "1" : 
+                 !effectiveId ? "new" : effectiveId;
   
   const isNewProject = safeId === 'new';
   

@@ -13,7 +13,14 @@ export default function ProjectDetail() {
   const { projects, loading } = useProjects();
   
   // Veilig decoderen van de project ID
-  const safeId = id ? decodeURIComponent(id) : '';
+  const safeId = id ? (() => {
+    try {
+      return decodeURIComponent(id);
+    } catch (error) {
+      console.error('Error decoding URI component:', error);
+      return id; // Gebruik de originele ID als fallback
+    }
+  })() : '';
   
   // Vind het project
   const project = projects.find((p) => p.id === safeId);

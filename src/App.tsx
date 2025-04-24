@@ -28,16 +28,16 @@ const App = () => (
         <Toaster />
         <Sonner />
         <ProjectProvider>
-          <BrowserRouter>
-            <ScrollToTop />
-            <Routes>
-              <Route element={<Layout />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/projects/:id" element={<ProjectDetail />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="*" element={<NotFound />} />
-              </Route>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectDetail />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
               
               {/* Test Routes */}
               <Route path="/test" element={<TestPage />} />
@@ -52,12 +52,13 @@ const App = () => (
                 </AuthProvider>
               }>
                 <Route path="/dashboard" element={<AdminDashboard />} />
-                <Route path="/dashboard/project/:id" element={<AdminProjectEditor />} />
                 {/* Speciale route voor Snotyoung project om URI encoding problemen te omzeilen */}
                 <Route path="/dashboard/project/snotyoung" element={<AdminProjectEditor specialProjectId="1" />} />
+                {/* Andere project routes */}
+                <Route path="/dashboard/project/:id" element={<AdminProjectEditor />} />
               </Route>
-            </Routes>
-          </BrowserRouter>
+          </Routes>
+        </BrowserRouter>
         </ProjectProvider>
       </TooltipProvider>
     </ThemeProvider>
