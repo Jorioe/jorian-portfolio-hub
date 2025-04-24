@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="nl">
   <head>
@@ -16,12 +15,34 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    
+    <!-- Zorg ervoor dat de pagina niet wordt gecached -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
   </head>
 
   <body>
     <div id="root"></div>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Maak een handler die pagina volledig opnieuw laadt 
+      document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+          e.preventDefault();
+          
+          // Forceer volledige pagina reload
+          window.location.reload(true);
+          
+          // Force fetch vanaf server en verwijder alle caches
+          fetch(window.location.href, { 
+            cache: 'reload',
+            headers: { 'Pragma': 'no-cache' }
+          }).then(() => {
+            window.location.reload(true);
+          });
+        }
+      });
+    </script>
   </body>
 </html>

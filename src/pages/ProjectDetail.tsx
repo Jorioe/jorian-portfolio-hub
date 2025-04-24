@@ -4,7 +4,11 @@ import { ArrowLeft, Github, ExternalLink, Instagram } from "lucide-react";
 import CategoryBadge from "@/components/CategoryBadge";
 import { useEffect, useState } from "react";
 import { useProjects } from "@/lib/ProjectContext";
-import { CategoryType } from "@/data/projects";
+import { CategoryType, Project } from "@/data/projects";
+
+// Type definities voor content blocks
+type ImageSizeType = 'small' | 'medium' | 'large' | 'full';
+type ImagePositionType = 'left' | 'right' | 'center';
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -67,6 +71,192 @@ export default function ProjectDetail() {
     }
   };
 
+  // Renderfunctie voor content items met de juiste afmetingen en posities
+  const renderContentItem = (item: any, index: number) => {
+    if (item.type === "text") {
+      return <p key={index} className="mb-4">{item.content}</p>;
+    } else if (item.type === "break") {
+      return <br key={index} />;
+    } else if (item.type === "subtitle") {
+      return <h2 key={index} className="text-2xl font-bold my-4">{item.content}</h2>;
+    } else if (item.type === "small-subtitle") {
+      return <h3 key={index} className="text-lg font-semibold my-3">{item.content}</h3>;
+    } else if (item.type === "bold-small-subtitle") {
+      return <h3 key={index} className="text-lg font-bold my-3">{item.content}</h3>;
+    } else if (item.type === "opsom-text-top") {
+      return <p key={index} className="-mt-3">{item.content}</p>;
+    } else if (item.type === "opsom-text") {
+      return <p key={index} className="mb-0">{item.content}</p>;
+    } else if (item.type === "opsom-text-bottom") {
+      return <p key={index} className="mb-4">{item.content}</p>;
+    } else if (item.type === "quote-top") {
+      return <p key={index} className="-mt-3 italic">{item.content}</p>;
+    } else if (item.type === "quote") {
+      return <p key={index} className="mb-0 italic">{item.content}</p>;
+    } else if (item.type === "quote-bottom") {
+      return <p key={index} className="mb-4 italic">{item.content}</p>;
+    } else if (item.type === "boldtexttop") {
+      return (
+        <p key={index} className="-mt-3">
+          <span className="mb-0 font-semibold">{item.content}</span> {item.aditionalContent}
+        </p>
+      );
+    } else if (item.type === "boldtext") {
+      return (
+        <p key={index}>
+          <span className="mb-0 font-semibold">{item.content}</span> {item.aditionalContent}
+        </p>
+      );
+    } else if (item.type === "image") {
+      // Bepaal de CSS-klasse voor afbeeldingsgrootte
+      const sizeClasses = {
+        'small': 'w-full max-w-xs',
+        'medium': 'w-full max-w-md',
+        'large': 'w-full max-w-lg',
+        'full': 'w-full'
+      };
+      
+      // Bepaal de CSS-klasse voor afbeeldingspositie
+      const positionClasses = {
+        'left': 'items-start',
+        'right': 'items-end',
+        'center': 'items-center'
+      };
+      
+      // Debug logging om te zien welke waarden we krijgen
+      console.log('Image item:', item, 'Size:', item.imageSize, 'Position:', item.imagePosition);
+      
+      const sizeClass = item.imageSize ? sizeClasses[item.imageSize as ImageSizeType] : sizeClasses.medium;
+      const positionClass = item.imagePosition ? positionClasses[item.imagePosition as ImagePositionType] : positionClasses.center;
+      
+      // Eén afbeelding
+      if (!item.content2) {
+        return (
+          <div key={index} className={`flex flex-col ${positionClass} w-full my-6`}>
+            {item.imgtext && (
+              <div className={`${sizeClass} mb-2`}>
+                <p className="font-semibold text-center">{item.imgtext}</p>
+              </div>
+            )}
+            <div className={`${sizeClass}`}>
+              <img
+                src={item.content}
+                className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
+                onClick={() => {
+                  setModalImage(item.content);
+                  setShowModal(true);
+                }}
+              />
+            </div>
+          </div>
+        );
+      }
+      
+      // Twee afbeeldingen naast elkaar
+      return (
+        <div key={index} className={`flex flex-col ${positionClass} w-full my-6`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+            <div className="flex flex-col items-center">
+              {item.imgtext && <p className="mb-2 font-semibold text-center">{item.imgtext}</p>}
+              <div className="w-full">
+                <img
+                  src={item.content}
+                  className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
+                  onClick={() => {
+                    setModalImage(item.content);
+                    setShowModal(true);
+                  }}
+                />
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              {item.imgtext2 && <p className="mb-2 font-semibold text-center">{item.imgtext2}</p>}
+              <div className="w-full">
+                <img
+                  src={item.content2}
+                  className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
+                  onClick={() => {
+                    setModalImage(item.content2);
+                    setShowModal(true);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    } else if (item.type === "flex-text") {
+      // Bepaal de CSS-klasse voor afbeeldingsgrootte voor flex-text
+      const sizeClasses = {
+        'small': 'w-full sm:w-1/4',
+        'medium': 'w-full sm:w-1/3', 
+        'large': 'w-full sm:w-1/2',
+        'full': 'w-full'
+      };
+      
+      const sizeClass = item.imageSize ? sizeClasses[item.imageSize as ImageSizeType] : sizeClasses.medium;
+      
+      // Debug logging om te zien welke data we hebben
+      console.log('Flex-text item:', item);
+      
+      // Bepaal of we de afbeelding links, rechts of als volledige breedte moeten plaatsen
+      if (!item.imagePosition || (item.imagePosition as ImagePositionType) === 'center') {
+        // Afbeelding onder tekst als volledige breedte
+        return (
+          <div key={index} className="flex flex-col items-center mb-10 w-full">
+            <div className="mb-6 w-full">{item.content}</div>
+            <div className={`${sizeClass}`}>
+              <img
+                src={item.content2 || item.image || ''}
+                className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
+                onClick={() => {
+                  setModalImage(item.content2 || item.image || '');
+                  setShowModal(true);
+                }}
+              />
+            </div>
+          </div>
+        );
+      } else if ((item.imagePosition as ImagePositionType) === 'right') {
+        // Afbeelding rechts
+        return (
+          <div key={index} className="flex flex-col sm:flex-row mb-10 gap-6 w-full">
+            <div className="flex-1">{item.content}</div>
+            <div className={`${sizeClass} shrink-0`}>
+              <img
+                src={item.content2 || item.image || ''}
+                className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
+                onClick={() => {
+                  setModalImage(item.content2 || item.image || '');
+                  setShowModal(true);
+                }}
+              />
+            </div>
+          </div>
+        );
+      } else {
+        // Afbeelding links
+        return (
+          <div key={index} className="flex flex-col sm:flex-row mb-10 gap-6 w-full">
+            <div className={`${sizeClass} shrink-0`}>
+              <img
+                src={item.content2 || item.image || ''}
+                className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
+                onClick={() => {
+                  setModalImage(item.content2 || item.image || '');
+                  setShowModal(true);
+                }}
+              />
+            </div>
+            <div className="flex-1">{item.content}</div>
+          </div>
+        );
+      }
+    }
+    return null;
+  };
+
   return (
     <div className="animate-fade-in">
       <div className="container mx-auto px-4 py-12">
@@ -100,106 +290,11 @@ export default function ProjectDetail() {
             </p>
 
             <div className="prose max-w-none mb-8">
-              <p className="text-lg mb-6">
-                {project.content.map((item, index) => {
-                  if (item.type === "text") {
-                    return <p key={index} className="mb-4">{item.content}</p>;
-                  } else if (item.type === "break") {
-                    return <br key={index} />;
-                  } else if (item.type === "subtitle") {
-                    return <h2 key={index} className="text-2xl font-bold my-4">{item.content}</h2>;
-                  } else if (item.type === "small-subtitle") {
-                    return <h3 key={index} className="text-lg font-semibold my-3">{item.content}</h3>;
-                  } else if (item.type === "bold-small-subtitle") {
-                    return <h3 key={index} className="text-lg font-bold my-3">{item.content}</h3>;
-                  } else if (item.type === "opsom-text-top") {
-                    return <p key={index} className="-mt-3">{item.content}</p>;
-                  } else if (item.type === "opsom-text") {
-                    return <p key={index} className="mb-0">{item.content}</p>;
-                  } else if (item.type === "opsom-text-bottom") {
-                    return <p key={index} className="mb-4">{item.content}</p>;
-                  } else if (item.type === "quote-top") {
-                    return <p key={index} className="-mt-3 italic">{item.content}</p>;
-                  } else if (item.type === "quote") {
-                    return <p key={index} className="mb-0 italic">{item.content}</p>;
-                  } else if (item.type === "quote-bottom") {
-                    return <p key={index} className="mb-4 italic">{item.content}</p>;
-                  } else if (item.type === "boldtexttop") {
-                    return (
-                    <p key={index} className="-mt-3">
-                      <span key={index} className="mb-0 font-semibold">{item.content}</span> {item.aditionalContent}
-                    </p>
-                  );
-                  } else if (item.type === "boldtext") {
-                    return (
-                    <p key={index}>
-                      <span key={index} className="mb-0 font-semibold">{item.content}</span> {item.aditionalContent}
-                    </p>
-                  );
-                  } else if (item.type === "image") {
-                    return (
-                      <div key={index} className="grid grid-cols-2 gap-2 my-4">
-                        <div>
-                          <p className="mb-0 font-semibold">{item.imgtext}</p>
-                        <img
-                          src={item.content}
-                          className="cursor-pointer rounded hover:opacity-80 transition"
-                          onClick={() => {
-                            setModalImage(item.content);
-                            setShowModal(true);
-                          }}
-                        />
-                        </div>
-                        <div>
-                        <p className="mb-0 font-semibold">{item.imgtext2}</p>
-                          <img
-                            src={item.content2}
-                            className="cursor-pointer rounded-lg hover:opacity-80 transition"
-                            onClick={() => {
-                              setModalImage(item.content2);
-                              setShowModal(true);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  }
-                  else if (item.type === "flex-text") {
-                    return (
-                      <div key={index} className="flex mb-20">
-                        {/* Text takes up 60% of the space */}
-                        <p className="flex-1 mr-20">{item.content}</p>
-                        {/* Image takes up 40% of the space and scales correctly */}
-                        <img
-                          src={item.image} // Assuming you have a separate property for the image source
-                          className="cursor-pointer flex-initial w-2/5 h-auto rounded-lg"  // Width set to 40% and height auto to maintain aspect ratio
-                          onClick={() => {
-                            setModalImage(item.image);
-                            setShowModal(true);
-                          }}
-                        />
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-              </p>
-
-              <div className="mb-4 flex flex-auto justify-start gap-2">
-                <p className="text-lg mb-6">
-                  {project.fullDescription2}
-                </p>
-                <div className="mb-4 flex flex-auto gap-2">
-                  <img
-                    src={project.image2}
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setModalImage(project.image2);
-                      setShowModal(true);
-                    }}
-                  />
-                </div>
+              <div className="text-lg mb-6">
+                {project.content.map((item, index) => renderContentItem(item, index))}
               </div>
+
+              {/* Eerder deed je hier nog iets met fullDescription2 en image2, maar dit bestaat niet in de Project interface */}
 
               {project.technologies && (
                 <div className="mt-8">

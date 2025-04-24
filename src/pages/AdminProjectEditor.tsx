@@ -69,6 +69,7 @@ interface AdminContentBlock {
   aditionalContent?: string; // Voor extra content zoals gebruikt bij boldtext
   imgtext?: string; // Voor begeleidende tekst bij afbeeldingen
   imgtext2?: string; // Voor begeleidende tekst bij tweede afbeelding
+  image?: string; // Voor afbeeldingen bij flex-text
 }
 
 // Extended project interface voor admin gebruik
@@ -255,6 +256,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
         ...newContent[index], 
         imageSize: value 
       };
+      console.log(`Wijziging van imageSize naar ${value} voor blok ${index}`);
       return { ...prev, content: newContent };
     });
   };
@@ -266,6 +268,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
         ...newContent[index], 
         imagePosition: value 
       };
+      console.log(`Wijziging van imagePosition naar ${value} voor blok ${index}`);
       return { ...prev, content: newContent };
     });
   };
@@ -818,8 +821,16 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                     <div className="mt-2">
                                       <Label>Afbeelding</Label>
                                       <ImageUploader 
-                                        defaultValue={block.content}
-                                        onImageUploaded={(url) => handleContentChange(index, 'content', url)}
+                                        defaultValue={block.content2 || block.image || ''}
+                                        onImageUploaded={(url) => {
+                                          if (block.type === 'flex-text') {
+                                            // Voor flex-text slaan we de afbeelding op in het content2 veld
+                                            handleContentChange(index, 'content2', url);
+                                          } else {
+                                            // Voor normale afbeeldingen gebruiken we content
+                                            handleContentChange(index, 'content', url);
+                                          }
+                                        }}
                                       />
                                     </div>
                                   )}
@@ -836,7 +847,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                     </div>
                                   )}
                                   
-                                  {(block.type === 'image' || block.type === 'flex-text') && (
+                                  {(block.type === 'image') && (
                                     <div className="mt-2">
                                       <Label>Tweede afbeelding (optioneel)</Label>
                                       <ImageUploader 
@@ -845,34 +856,68 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                       />
                                     </div>
                                   )}
-                                  
-                                  {(block.type === 'image' || block.type === 'flex-text') && block.content2 && (
-                                    <div className="mt-2">
-                                      <Label htmlFor={`imgtext2-${index}`}>Tweede afbeeldingbeschrijving</Label>
-                                      <Input 
-                                        id={`imgtext2-${index}`} 
-                                        value={block.imgtext2 || ''} 
-                                        onChange={(e) => handleContentChange(index, 'imgtext2', e.target.value)}
-                                        placeholder="Beschrijving voor de tweede afbeelding"
-                                      />
-                                    </div>
-                                  )}
                                 </div>
                                 
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive" 
-                                  onClick={() => removeContentBlock(index)}
-                                  className="flex items-center ml-2"
-                                >
-                                  <Trash2 size={16} />
-                                </Button>
+                                <div className="flex flex-col ml-2 gap-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive" 
+                                    onClick={() => removeContentBlock(index)}
+                                    className="flex items-center"
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
+                                  
+                                  {/* Navigatieknoppen om het blok te verplaatsen */}
+                                  <div className="flex flex-col gap-1">
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => {
+                                        if (index > 0) {
+                                          const newContent = [...project.content];
+                                          [newContent[index], newContent[index - 1]] = [newContent[index - 1], newContent[index]];
+                                          setProject(prev => ({ ...prev, content: newContent }));
+                                        }
+                                      }}
+                                      disabled={index === 0}
+                                      className="px-2 py-0 h-8"
+                                    >
+                                      ↑
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => {
+                                        if (index < project.content.length - 1) {
+                                          const newContent = [...project.content];
+                                          [newContent[index], newContent[index + 1]] = [newContent[index + 1], newContent[index]];
+                                          setProject(prev => ({ ...prev, content: newContent }));
+                                        }
+                                      }}
+                                      disabled={index === project.content.length - 1}
+                                      className="px-2 py-0 h-8"
+                                    >
+                                      ↓
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
                             </Card>
                           )}
                         </Draggable>
                       ))}
                       {provided.placeholder}
+                      
+                      {/* Knop om een blok toe te voegen onder aan de lijst */}
+                      <div className="flex justify-center mt-6">
+                        <Button 
+                          onClick={addContentBlock}
+                          className="flex items-center gap-1"
+                        >
+                          <Plus size={16} /> Nieuw blok toevoegen
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </Droppable>
