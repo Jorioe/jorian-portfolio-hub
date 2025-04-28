@@ -13,47 +13,30 @@ type ImagePositionType = 'left' | 'right' | 'center';
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [notFound, setNotFound] = useState(false);
   const { projects, loading } = useProjects();
-  
+  const [notFound, setNotFound] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalImage, setModalImage] = useState("");
+  const [zoom, setZoom] = useState(1);
+  const [transformOrigin, setTransformOrigin] = useState("center center");
+
   // Veilig decoderen van de project ID
   const safeId = id ? (() => {
     try {
       return decodeURIComponent(id);
     } catch (error) {
       console.error('Error decoding URI component:', error);
-      return id; // Gebruik de originele ID als fallback
+      return id;
     }
   })() : '';
-  
-  // Vind het project
+
   const project = projects.find((p) => p.id === safeId);
 
   useEffect(() => {
-    // Als de projecten geladen zijn en het project niet gevonden is
     if (!loading && !project) {
       setNotFound(true);
     }
-  }, [project, loading]);
-
-  if (notFound) {
-    return (
-      <div className="container py-16 text-center">
-        <h1 className="text-3xl font-bold mb-4">Project niet gevonden</h1>
-        <p className="mb-6">Het project dat je zoekt bestaat niet of is verwijderd.</p>
-        <Button onClick={() => navigate("/projects")}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Terug naar Projecten
-        </Button>
-      </div>
-    );
-  }
-
-  if (!project) return <div className="container py-16">Laden...</div>;
-
-  const [showModal, setShowModal] = useState(false);
-  const [modalImage, setModalImage] = useState("");
-  const [zoom, setZoom] = useState(1);
-  const [transformOrigin, setTransformOrigin] = useState("center center");
+  }, [loading, project]);
 
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -71,65 +54,72 @@ export default function ProjectDetail() {
     }
   };
 
-  // Renderfunctie voor content items met de juiste afmetingen en posities
+  if (notFound) {
+    return (
+      <div className="container py-16 text-center">
+        <h1 className="text-3xl font-bold mb-4">Project niet gevonden</h1>
+        <p className="mb-6">Het project dat je zoekt bestaat niet of is verwijderd.</p>
+        <Button onClick={() => navigate("/projects")}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Terug naar Projecten
+        </Button>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return <div className="container py-16">Laden...</div>;
+  }
+
   const renderContentItem = (item: any, index: number) => {
     if (item.type === "text") {
       return <p key={index} className="mb-4">{item.content}</p>;
-    } else if (item.type === "break") {
+    }
+    if (item.type === "break") {
       return <br key={index} />;
-    } else if (item.type === "subtitle") {
+    }
+    if (item.type === "subtitle") {
       return <h2 key={index} className="text-2xl font-bold my-4">{item.content}</h2>;
-    } else if (item.type === "small-subtitle") {
+    }
+    if (item.type === "small-subtitle") {
       return <h3 key={index} className="text-lg font-semibold my-3">{item.content}</h3>;
-    } else if (item.type === "bold-small-subtitle") {
+    }
+    if (item.type === "bold-small-subtitle") {
       return <h3 key={index} className="text-lg font-bold my-3">{item.content}</h3>;
-    } else if (item.type === "opsom-text-top") {
+    }
+    if (item.type === "opsom-text-top") {
       return <p key={index} className="-mt-3">{item.content}</p>;
-    } else if (item.type === "opsom-text") {
+    }
+    if (item.type === "opsom-text") {
       return <p key={index} className="mb-0">{item.content}</p>;
-    } else if (item.type === "opsom-text-bottom") {
+    }
+    if (item.type === "opsom-text-bottom") {
       return <p key={index} className="mb-4">{item.content}</p>;
-    } else if (item.type === "quote-top") {
-      return <p key={index} className="-mt-3 italic">{item.content}</p>;
-    } else if (item.type === "quote") {
-      return <p key={index} className="mb-0 italic">{item.content}</p>;
-    } else if (item.type === "quote-bottom") {
-      return <p key={index} className="mb-4 italic">{item.content}</p>;
-    } else if (item.type === "boldtexttop") {
+    }
+    if (item.type === "quote-top" || item.type === "quote" || item.type === "quote-bottom") {
+      return <p key={index} className="italic mb-4">{item.content}</p>;
+    }
+    if (item.type === "boldtexttop" || item.type === "boldtext") {
       return (
-        <p key={index} className="-mt-3">
-          <span className="mb-0 font-semibold">{item.content}</span> {item.aditionalContent}
+        <p key={index} className={item.type === "boldtexttop" ? "-mt-3" : ""}>
+          <span className="font-semibold">{item.content}</span> {item.aditionalContent}
         </p>
       );
-    } else if (item.type === "boldtext") {
-      return (
-        <p key={index}>
-          <span className="mb-0 font-semibold">{item.content}</span> {item.aditionalContent}
-        </p>
-      );
-    } else if (item.type === "image") {
-      // Bepaal de CSS-klasse voor afbeeldingsgrootte
+    }
+    if (item.type === "image") {
       const sizeClasses = {
-        'small': 'w-full max-w-xs',
-        'medium': 'w-full max-w-md',
-        'large': 'w-full max-w-lg',
-        'full': 'w-full'
+        small: "w-full max-w-xs",
+        medium: "w-full max-w-md",
+        large: "w-full max-w-lg",
+        full: "w-full",
       };
-      
-      // Bepaal de CSS-klasse voor afbeeldingspositie
       const positionClasses = {
-        'left': 'items-start',
-        'right': 'items-end',
-        'center': 'items-center'
+        left: "items-start",
+        right: "items-end",
+        center: "items-center",
       };
-      
-      // Debug logging om te zien welke waarden we krijgen
-      console.log('Image item:', item, 'Size:', item.imageSize, 'Position:', item.imagePosition);
-      
-      const sizeClass = item.imageSize ? sizeClasses[item.imageSize as ImageSizeType] : sizeClasses.medium;
-      const positionClass = item.imagePosition ? positionClasses[item.imagePosition as ImagePositionType] : positionClasses.center;
-      
-      // Eén afbeelding
+      const sizeClass = sizeClasses[item.imageSize as ImageSizeType] || sizeClasses.medium;
+      const positionClass = positionClasses[item.imagePosition as ImagePositionType] || positionClasses.center;
+
       if (!item.content2) {
         return (
           <div key={index} className={`flex flex-col ${positionClass} w-full my-6`}>
@@ -141,6 +131,7 @@ export default function ProjectDetail() {
             <div className={`${sizeClass}`}>
               <img
                 src={item.content}
+                alt=""
                 className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
                 onClick={() => {
                   setModalImage(item.content);
@@ -151,108 +142,92 @@ export default function ProjectDetail() {
           </div>
         );
       }
-      
+
       // Twee afbeeldingen naast elkaar
       return (
         <div key={index} className={`flex flex-col ${positionClass} w-full my-6`}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-            <div className="flex flex-col items-center">
-              {item.imgtext && <p className="mb-2 font-semibold text-center">{item.imgtext}</p>}
-              <div className="w-full">
-                <img
-                  src={item.content}
-                  className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
-                  onClick={() => {
-                    setModalImage(item.content);
-                    setShowModal(true);
-                  }}
-                />
+            {[item.content, item.content2].map((src, i) => (
+              <div key={i} className="flex flex-col items-center">
+                {i === 0 ? item.imgtext : item.imgtext2 ? (
+                  <p className="mb-2 font-semibold text-center">{i === 0 ? item.imgtext : item.imgtext2}</p>
+                ) : null}
+                <div className="w-full">
+                  <img
+                    src={src}
+                    alt=""
+                    className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
+                    onClick={() => {
+                      setModalImage(src);
+                      setShowModal(true);
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div className="flex flex-col items-center">
-              {item.imgtext2 && <p className="mb-2 font-semibold text-center">{item.imgtext2}</p>}
-              <div className="w-full">
-                <img
-                  src={item.content2}
-                  className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
-                  onClick={() => {
-                    setModalImage(item.content2);
-                    setShowModal(true);
-                  }}
-                />
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       );
-    } else if (item.type === "flex-text") {
-      // Bepaal de CSS-klasse voor afbeeldingsgrootte voor flex-text
+    }
+    if (item.type === "flex-text") {
       const sizeClasses = {
-        'small': 'w-full sm:w-1/4',
-        'medium': 'w-full sm:w-1/3', 
-        'large': 'w-full sm:w-1/2',
-        'full': 'w-full'
+        small: "w-full sm:w-1/4",
+        medium: "w-full sm:w-1/3",
+        large: "w-full sm:w-1/2",
+        full: "w-full",
       };
-      
-      const sizeClass = item.imageSize ? sizeClasses[item.imageSize as ImageSizeType] : sizeClasses.medium;
-      
-      // Debug logging om te zien welke data we hebben
-      console.log('Flex-text item:', item);
-      
-      // Bepaal of we de afbeelding links, rechts of als volledige breedte moeten plaatsen
-      if (!item.imagePosition || (item.imagePosition as ImagePositionType) === 'center') {
-        // Afbeelding onder tekst als volledige breedte
+      const sizeClass = sizeClasses[item.imageSize as ImageSizeType] || sizeClasses.medium;
+
+      if (!item.imagePosition || item.imagePosition === "center") {
         return (
           <div key={index} className="flex flex-col items-center mb-10 w-full">
             <div className="mb-6 w-full">{item.content}</div>
-            <div className={`${sizeClass}`}>
+            <div className={sizeClass}>
               <img
-                src={item.content2 || item.image || ''}
+                src={item.content2 || item.image}
+                alt=""
                 className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
                 onClick={() => {
-                  setModalImage(item.content2 || item.image || '');
+                  setModalImage(item.content2 || item.image);
                   setShowModal(true);
                 }}
               />
             </div>
-          </div>
-        );
-      } else if ((item.imagePosition as ImagePositionType) === 'right') {
-        // Afbeelding rechts
-        return (
-          <div key={index} className="flex flex-col sm:flex-row mb-10 gap-6 w-full">
-            <div className="flex-1">{item.content}</div>
-            <div className={`${sizeClass} shrink-0`}>
-              <img
-                src={item.content2 || item.image || ''}
-                className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
-                onClick={() => {
-                  setModalImage(item.content2 || item.image || '');
-                  setShowModal(true);
-                }}
-              />
-            </div>
-          </div>
-        );
-      } else {
-        // Afbeelding links
-        return (
-          <div key={index} className="flex flex-col sm:flex-row mb-10 gap-6 w-full">
-            <div className={`${sizeClass} shrink-0`}>
-              <img
-                src={item.content2 || item.image || ''}
-                className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
-                onClick={() => {
-                  setModalImage(item.content2 || item.image || '');
-                  setShowModal(true);
-                }}
-              />
-            </div>
-            <div className="flex-1">{item.content}</div>
           </div>
         );
       }
+
+      return (
+        <div key={index} className="flex flex-col sm:flex-row mb-10 gap-6 w-full">
+          {item.imagePosition === "left" && (
+            <div className={`${sizeClass} shrink-0`}>
+              <img
+                src={item.content2 || item.image}
+                alt=""
+                className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
+                onClick={() => {
+                  setModalImage(item.content2 || item.image);
+                  setShowModal(true);
+                }}
+              />
+            </div>
+          )}
+          <div className="flex-1">{item.content}</div>
+          {item.imagePosition === "right" && (
+            <div className={`${sizeClass} shrink-0`}>
+              <img
+                src={item.content2 || item.image}
+                alt=""
+                className="cursor-pointer rounded hover:opacity-80 transition w-full h-auto"
+                onClick={() => {
+                  setModalImage(item.content2 || item.image);
+                  setShowModal(true);
+                }}
+              />
+            </div>
+          )}
+        </div>
+      );
     }
     return null;
   };
@@ -267,11 +242,7 @@ export default function ProjectDetail() {
 
         <div className="bg-card border rounded-lg overflow-hidden shadow-sm">
           <div className="aspect-video bg-muted relative overflow-hidden">
-            <img
-              src={project.image}
-              alt={project.title}
-              className="w-full h-full object-cover"
-            />
+            <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
           </div>
 
           <div className="p-8">
@@ -281,30 +252,20 @@ export default function ProjectDetail() {
               ))}
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              {project.title}
-            </h1>
-            
-            <p className="text-muted-foreground mb-8">
-              {project.date}
-            </p>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">{project.title}</h1>
+            <p className="text-muted-foreground mb-8">{project.date}</p>
 
             <div className="prose max-w-none mb-8">
               <div className="text-lg mb-6">
                 {project.content.map((item, index) => renderContentItem(item, index))}
               </div>
 
-              {/* Eerder deed je hier nog iets met fullDescription2 en image2, maar dit bestaat niet in de Project interface */}
-
               {project.technologies && (
                 <div className="mt-8">
                   <h2 className="text-lg font-semibold mb-4">Gebruikte technologieën</h2>
                   <div className="flex flex-wrap gap-2">
                     {project.technologies.map((tech, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
-                      >
+                      <span key={index} className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm">
                         {tech}
                       </span>
                     ))}
@@ -317,26 +278,21 @@ export default function ProjectDetail() {
               {project.githubLink && (
                 <Button asChild variant="outline">
                   <a href={project.githubLink} target="_blank" rel="noopener noreferrer">
-                    <Github className="mr-2 h-4 w-4" />
-                    Bekijk op GitHub
+                    <Github className="mr-2 h-4 w-4" /> Bekijk op GitHub
                   </a>
                 </Button>
               )}
-              
               {project.demoLink && (
                 <Button asChild>
                   <a href={project.demoLink} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Live Demo
+                    <ExternalLink className="mr-2 h-4 w-4" /> Live Demo
                   </a>
                 </Button>
               )}
-              
               {project.instagramLink && (
                 <Button asChild variant="outline">
                   <a href={project.instagramLink} target="_blank" rel="noopener noreferrer">
-                    <Instagram className="mr-2 h-4 w-4" />
-                    Bekijk hier
+                    <Instagram className="mr-2 h-4 w-4" /> Bekijk hier
                   </a>
                 </Button>
               )}
@@ -352,8 +308,7 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-    {/* ✅ Modal met zoom op klikpositie */}
-    {showModal && (
+      {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
           onClick={() => {
@@ -369,17 +324,14 @@ export default function ProjectDetail() {
             >
               <img
                 src={modalImage}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleImageClick(e);
-                }}
+                onClick={handleImageClick}
                 className="select-none transition-transform duration-300 ease-in-out object-contain w-full h-auto"
                 style={{
                   transform: `scale(${zoom})`,
-                  transformOrigin: transformOrigin,
+                  transformOrigin,
                   maxWidth: "90vw",
                   maxHeight: "90vh",
-                  minWidth: "60vw",     // ensures small images are displayed larger
+                  minWidth: "60vw",
                   minHeight: "60vh",
                   borderRadius: "0.5rem",
                   cursor: zoom === 1 ? "zoom-in" : "zoom-out",
@@ -403,4 +355,3 @@ export default function ProjectDetail() {
     </div>
   );
 }
-
