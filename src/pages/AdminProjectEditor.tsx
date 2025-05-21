@@ -480,10 +480,27 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
           
           <div className="space-y-2">
             <Label htmlFor="image">Hoofdafbeelding</Label>
-            <ImageUploader 
-              defaultValue={project.image}
-              onImageUploaded={(url) => setProject(prev => ({ ...prev, image: url }))}
-            />
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <ImageUploader 
+                  defaultValue={project.image}
+                  onImageUploaded={(url) => setProject(prev => ({ ...prev, image: url }))}
+                />
+              </div>
+              {project.image && (
+                <div className="relative w-40 h-40 rounded-md overflow-hidden">
+                  <img 
+                    src={project.image} 
+                    alt="Project hoofdafbeelding" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback als de afbeelding niet laadt
+                      (e.target as HTMLImageElement).src = 'https://placehold.co/400?text=No+Image';
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -819,24 +836,6 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                   
                                   {(block.type === 'image' || block.type === 'flex-text') && (
                                     <div className="mt-2">
-                                      <Label>Afbeelding</Label>
-                                      <ImageUploader 
-                                        defaultValue={block.content2 || block.image || ''}
-                                        onImageUploaded={(url) => {
-                                          if (block.type === 'flex-text') {
-                                            // Voor flex-text slaan we de afbeelding op in het content2 veld
-                                            handleContentChange(index, 'content2', url);
-                                          } else {
-                                            // Voor normale afbeeldingen gebruiken we content
-                                            handleContentChange(index, 'content', url);
-                                          }
-                                        }}
-                                      />
-                                    </div>
-                                  )}
-                                  
-                                  {(block.type === 'image' || block.type === 'flex-text') && (
-                                    <div className="mt-2">
                                       <Label htmlFor={`imgtext-${index}`}>Afbeeldingbeschrijving</Label>
                                       <Input 
                                         id={`imgtext-${index}`} 
@@ -847,13 +846,74 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                     </div>
                                   )}
                                   
+                                  {(block.type === 'image' || block.type === 'flex-text') && (
+                                    <div className="mt-2 flex gap-4">
+                                      <div className="flex-1">
+                                        <Label>Afbeelding</Label>
+                                        <ImageUploader 
+                                          defaultValue={block.content2 || block.image || block.content || ''}
+                                          onImageUploaded={(url) => {
+                                            if (block.type === 'flex-text') {
+                                              // Voor flex-text slaan we de afbeelding op in het content2 veld
+                                              handleContentChange(index, 'content2', url);
+                                            } else {
+                                              // Voor normale afbeeldingen gebruiken we content
+                                              handleContentChange(index, 'content', url);
+                                            }
+                                          }}
+                                        />
+                                      </div>
+                                      {block.type === 'image' && block.content && (
+                                        <div className="relative w-40 h-40 rounded-md overflow-hidden">
+                                          <img 
+                                            src={block.content} 
+                                            alt="Afbeelding voorbeeld" 
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                              // Fallback als de afbeelding niet laadt
+                                              (e.target as HTMLImageElement).src = 'https://placehold.co/400?text=No+Image';
+                                            }}
+                                          />
+                                        </div>
+                                      )}
+                                      {block.type === 'flex-text' && block.content2 && (
+                                        <div className="relative w-40 h-40 rounded-md overflow-hidden">
+                                          <img 
+                                            src={block.content2} 
+                                            alt="Afbeelding voorbeeld" 
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                              // Fallback als de afbeelding niet laadt
+                                              (e.target as HTMLImageElement).src = 'https://placehold.co/400?text=No+Image';
+                                            }}
+                                          />
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  
                                   {(block.type === 'image') && (
-                                    <div className="mt-2">
-                                      <Label>Tweede afbeelding (optioneel)</Label>
-                                      <ImageUploader 
-                                        defaultValue={block.content2 || ''}
-                                        onImageUploaded={(url) => handleContentChange(index, 'content2', url)}
-                                      />
+                                    <div className="mt-2 flex gap-4">
+                                      <div className="flex-1">
+                                        <Label>Tweede afbeelding (optioneel)</Label>
+                                        <ImageUploader 
+                                          defaultValue={block.content2 || ''}
+                                          onImageUploaded={(url) => handleContentChange(index, 'content2', url)}
+                                        />
+                                      </div>
+                                      {block.content2 && (
+                                        <div className="relative w-40 h-40 rounded-md overflow-hidden">
+                                          <img 
+                                            src={block.content2}
+                                            alt="Tweede afbeelding voorbeeld" 
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                              // Fallback als de afbeelding niet laadt
+                                              (e.target as HTMLImageElement).src = 'https://placehold.co/400?text=No+Image';
+                                            }}
+                                          />
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </div>

@@ -244,22 +244,58 @@ export const projects: Project[] = [
       { type: "subtitle", content: "Design" },
       
     ],
-    fullDescription: "Dit project betrof het herontwerpen van de gebruikersinterface voor een bestaande mobiele app. Na uitgebreid gebruikersonderzoek heb ik pijnpunten geïdentificeerd en een nieuw ontwerp gecreëerd dat de gebruikerservaring significant verbeterde. Het herontwerp resulteerde in een 40 hogere gebruikerstevredenheid en 25 meer dagelijkse actieve gebruikers.",
     technologies: ["Figma", "Adobe XD", "Sketch", "InVision", "User Testing"],
     skills: ["Figma", "UI/UX", "Prototyping", "Market Research", "Javascript", "React", "User Testing"],
     demoLink: "https://demo-project.com"
   },
-  // {
-  //   id: "4",
-  //   title: "Marktonderzoek Sociale Media",
-  //   description: "Uitgebreid onderzoek naar sociale media gebruikspatronen onder jongeren",
-  //   image: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80",
-  //   categories: ["research", "data"],
-  //   date: "Mei 2023", 
-  //   fullDescription: "Voor dit onderzoeksproject heb ik de sociale media gebruikspatronen onder jongeren tussen 15-25 jaar onderzocht. Het onderzoek omvatte zowel kwalitatieve als kwantitatieve methoden, waaronder enquêtes, interviews en data-analyse. De resultaten boden inzicht in opkomende trends en voorkeursplatformen, wat waardevol was voor marketingstrategieën gericht op deze demografische groep.",
-  //   fullDescription2: "tests",
-  //   technologies: ["SPSS", "Google Analytics", "Survey Monkey", "Excel", "Power BI"],
-  // },
+  {
+    id: "4",
+    title: "Marktonderzoek Sociale Media",
+    description: "Uitgebreid onderzoek naar sociale media gebruikspatronen onder jongeren",
+    image: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80",
+    categories: ["research", "data"],
+    date: "Mei 2023", 
+    content: [
+      { type: "text", content: "LiveWall is een creatief digitaal bureau met een team van denkers en makers in zowel de creatieve als technische industrie. Ze zijn gespecialiseerd in van het ontwikkelen van een digitale marketingstrategie tot het bouwen van online platforms en het creëren van klikbare content tot het organiseren van (hybride) evenementen. Ze werken in 3 kernteams: Platform & Apps, Engagement & Gaming en Studio's. LiveWall heeft ons gevraagd om te onderzoeken wat de impact van AI kan hebben op het nieuws in de toekomst." },
+      { type: "break", content: "" }, // Witregel toevoegen
+      { type: "subtitle", content: "De opdracht" }, // Nog een subtitel
+      { type: "text", content: "Het doel van het project is om te kijken wat de mogelijkheden zijn om de journalistiek te verbeteren door middel van generatieve AI. Hierbij is de bedoeling dat er bekeken wordt wat de mogelijkheden zijn op dit gebied, wat er al bestaat en wat er nog mogelijk is in de toekomst. Om hierachter te komen zullen wij als groep onderzoek gaan doen naar dit onderwerp. Het doel is om een product te maken dat ervoor zorgt dat generative AI de nieuws ervaring voor lezers verbetert en dat journalisten de artikelen makkelijker kunnen maken. De kans die wij benutten met dit project is de nieuwservaring van de lezers/kijkers verbeteren door het gebruik van AI op grotere schaal te gebruiken." },
+      { type: "subtitle", content: "Discover" }, // Nog een subtitel
+      { type: "flex-text", content: "Om meer te weten te komen over hoe vaak en waarop mensen het nieuws volgen, hebben we een enquête opgesteld. Deze is ingevuld door 166 mensen van verschillende leeftijden. Hieruit is gekomen dat hoe lager de leeftijdscategorie, hoe minder nieuws er wordt gevolgd. Hierna zijn we biebonderzoek gaan doen naar de nieuwsconsumptie. De resultaten van de enquête hebben we toen vergeleken met de resultaten van het onderzoek en hieruit hebben we onze doelgroep vastgesteld: jongvolwassenen tussen de 18 en 29 jaar.",
+        image: "/img/newz-1.jpg"},
+      { type: "flex-text", content: "Na het vaststellen van de doelgroep hebben we de enquête er weer bij gepakt en gekeken naar hoe de personen van onze doelgroep het nieuws volgen. Hieruit is gebleken dat er een enorme voorkeur uitgaat naar shorts video's van minder dan 1 minuut.",
+        image: "/img/newz-2.jpg"},
+      { type: "text", content: "Om een beter beeld te krijgen heb ik 2 interviews gehouden met mensen uit onze doelgroep om te ontdekken over hoe mensen het nieuws volgen en wat hun struikelblokken daarbij zijn. Ook wilde ik te weten komen welke nieuwsbronnen ze gebruiken, welke problemen ze ervaren en welke ideeën ze hebben over hoe nieuws beter kan worden gepresenteerd."},
+      { type: "text", content: "Hier zijn enkele belangrijke punten die uit deze interviews kwamen:" },
+      { type: "opsom-text-top", content: "• Nieuws wat je op sociale media tegenkomt is minder snel betrouwbaar" },    
+      { type: "opsom-text-bottom", content: "• Gebrek aan interesse. Doordat nieuws vaak niet leuk is of op een saaie manier wordt gepubliceerd, is er minder interesse om het nieuws te volgen." },    
+      { type: "text", content: "Hierna hebben we de volgende onderzoeksvragen opgesteld om een duidelijk begrip te krijgen van wat er moet worden onderzocht en om een richting te bieden voor het onderzoek:" },
+      { type: "small-subtitle", content: "Hoofdvraag:" }, 
+      { type: "opsom-text-top", content: "Hoe zorgen wij ervoor dat AI de nieuwswereld veranderd zodat meer jongeren het nieuws gaan volgen?" },
+      { type: "small-subtitle", content: "Deelvragen:" }, 
+      { type: "opsom-text-top", content: "• Hoe ziet de huidige implementatie van AI eruit in de nieuwswereld?" },
+      { type: "opsom-text", content: "• Welke manieren van het gebruiken van AI zijn effectief?" },
+      { type: "opsom-text", content: "• Wat zijn de nadelen in de huidige implementatie van AI?" },
+      { type: "opsom-text", content: "• Hoe beïnvloedt de implementatie van AI de objectiviteit en betrouwbaarheid van nieuwsberichtgeving?" },
+      { type: "opsom-text", content: "• In hoeverre verbetert AI de personalisatie van nieuwsconsumptie voor individuele lezers?" },
+      { type: "opsom-text-bottom", content: "• Wat zijn de ethische en maatschappelijke implicaties van het gebruik van AI in de redactionele besluitvorming van nieuwsorganisaties?" },
+      { type: "break", content: "" }, // Witregel toevoegen
+      { type: "text", content: "Ook hebben we onderzoek gedaan naar de mogelijkheden van AI. Hieruit is gekomen dat AI een enorme potentie heeft om te groeien in verschillende industrieën. Ook heb ik interviews gehouden met een expert, studenten journalisme, onderzoek gedaan naar de huidige implementatie van AI in de nieuwswereld en de nadelen van AI. Hieruit is gekomen dat sommige grote mediabedrijven al gebruik maken van AI om bijvoorbeeld nieuwsproductiecapaciteiten te verbeteren. Daarnaast is gebleken dat het vele gebruik van AI kan leiden tot beschadiging van het vertrouwen van de mensen." },
+      { type: "subtitle", content: "Define" },
+      { type: "flex-text", content: "Om de doelgroep beter te begrijpen hebben we aan de hand van deze onderzoeken een empathy map en een persona gemaakt. Om onze creativiteit aan te wakkeren hebben we samen met de docent een design challenge opgesteld: ontwerp een omgeving om jongvolwassenen in de leeftijd van 18-29 jaar te laten interesseren in nieuws zodat ze weten wat er gaande is.",
+        image: "/img/newz-3.png"},
+      { type: "text", content: "Hierna hebben we How-Might-We-vragen gemaakt om innovatieve oplossingen te verkennen:" },
+      { type: "opsom-text-top", content: "• Hoe gaan we jongvolwassenen van 18-29 jaar laten \"snacken\" van het nieuws zodat we hun betrokkenheid bij nieuws vergroten." },
+      { type: "opsom-text", content: "• Hoe kunnen we AI inzetten om nieuwsverhalen te selecteren en aanbevelingen te doen op basis van de persoonlijke interesses en voorkeuren van jongvolwassenen?" },
+      { type: "opsom-text-bottom", content: "• Hoe kunnen we AI inzetten om nieuws op een visueel aantrekkelijke manier te presenteren, zoals infographics of korte video's, om jongvolwassenen aan te spreken die niet van lange teksten houden?" },
+      { type: "break", content: "" }, // Witregel toevoegen
+      { type: "subtitle", content: "Design" },
+      
+    ],
+    technologies: ["Figma", "Adobe XD", "Sketch", "InVision", "User Testing"],
+    skills: ["Figma", "UI/UX", "Prototyping", "Market Research", "Javascript", "React", "User Testing"],
+    demoLink: "https://demo-project.com"
+  },
   // {
   //   id: "5",
   //   title: "Mobiele Fitness App",

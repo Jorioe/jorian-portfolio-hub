@@ -9,6 +9,7 @@ interface ProjectContextType {
   addProject: (project: Project) => void;
   updateProject: (project: Project) => void;
   deleteProject: (id: string) => void;
+  resetProjects: () => void;
 }
 
 // Lokale opslag key
@@ -22,6 +23,7 @@ const ProjectContext = createContext<ProjectContextType>({
   addProject: () => {},
   updateProject: () => {},
   deleteProject: () => {},
+  resetProjects: () => {},
 });
 
 // Hook om de context te gebruiken
@@ -98,6 +100,27 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     console.log('Project verwijderd:', id);
   };
 
+  // Functie om projecten te resetten naar de initiële data uit projects.ts
+  const resetProjects = () => {
+    // Gebruik rechtstreeks de geïmporteerde initialProjects
+    // Dit zorgt ervoor dat we altijd de laatst gecompileerde versie gebruiken
+    console.log('Reset naar initiële projecten:', initialProjects);
+    
+    // Verwijder eerst de opgeslagen projecten uit localStorage
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.error('Error removing projects from localStorage:', error);
+    }
+    
+    // Update de staat met de initiële projecten
+    setProjects(initialProjects);
+    console.log('Projecten gereset naar initiële data');
+    
+    // We slaan de initiële projecten niet opnieuw op in localStorage
+    // zodat bij een refresh de data opnieuw uit projects.ts wordt geladen
+  };
+
   return (
     <ProjectContext.Provider value={{ 
       projects, 
@@ -105,7 +128,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       updateProjects, 
       addProject,
       updateProject,
-      deleteProject
+      deleteProject,
+      resetProjects
     }}>
       {children}
     </ProjectContext.Provider>

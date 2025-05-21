@@ -14,9 +14,14 @@ import NotFound from "@/pages/NotFound";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminProjectEditor from "@/pages/AdminProjectEditor";
+import ContactMessages from "@/pages/ContactMessages";
+import MediaLibrary from "@/pages/MediaLibrary";
+import HomeEditor from "@/pages/HomeEditor";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/lib/AuthContext";
 import { ProjectProvider } from "@/lib/ProjectContext";
+import { ContactProvider } from "@/lib/ContactContext";
+import { HomeProvider } from "@/lib/HomeContext";
 import TestPage from "@/pages/TestPage";
 import { useEffect } from "react";
 
@@ -80,6 +85,11 @@ const AppRouter = () => {
           <Route path="/dashboard/project/snotyoung" element={<AdminProjectEditor specialProjectId="1" />} />
           {/* Andere project routes */}
           <Route path="/dashboard/project/:id" element={<AdminProjectEditor />} />
+          {/* Homepage editor route */}
+          <Route path="/dashboard/home-editor" element={<HomeEditor />} />
+          {/* Contact en Media routes */}
+          <Route path="/dashboard/contact" element={<ContactMessages />} />
+          <Route path="/dashboard/media" element={<MediaLibrary />} />
         </Route>
       </Routes>
     </>
@@ -93,9 +103,13 @@ const App = () => (
         <Toaster />
         <Sonner />
         <ProjectProvider>
-          <BrowserRouter>
-            <AppRouter />
-          </BrowserRouter>
+          <ContactProvider>
+            <HomeProvider>
+              <BrowserRouter>
+                <AppRouter />
+              </BrowserRouter>
+            </HomeProvider>
+          </ContactProvider>
         </ProjectProvider>
       </TooltipProvider>
     </ThemeProvider>

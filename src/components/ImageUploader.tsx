@@ -1,211 +1,296 @@
-import { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { supabase } from '@/lib/supabase';
-import { Upload, X, Image } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { ImagePlus, Upload, X, Link as LinkIcon, Eye } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import { MediaSelector } from './MediaSelector';
+
+// Lokale opslag key voor de media bibliotheek
+const MEDIA_STORAGE_KEY = 'portfolio_media_library';
 
 interface ImageUploaderProps {
-  onImageUploaded: (url: string) => void;
   defaultValue?: string;
-  label?: string;
+  onImageUploaded: (url: string) => void;
 }
 
-export function ImageUploader({ onImageUploaded, defaultValue, label }: ImageUploaderProps) {
-  const [imageUrl, setImageUrl] = useState<string>(defaultValue || '');
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+// Globale cache voor afbeeldingen
+const imageCache: Record<string, boolean> = {};
 
-  const uploadImage = useCallback(async (file: File) => {
-    try {
-      setUploading(true);
-      setProgress(0);
-      setError(null);
-
-      // Voor demo doeleinden, in een echte implementatie zou je Supabase Storage gebruiken
-      // Hier simuleren we het uploaden en maken we een lokale URL
-      const reader = new FileReader();
-      
-      reader.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percentage = Math.round((event.loaded / event.total) * 100);
-          setProgress(percentage);
-        }
-      };
-      
-      reader.onload = () => {
-        setTimeout(() => {
-          // Simuleer een vertraging om het uploaden te tonen
-          if (typeof reader.result === 'string') {
-            // In een echte implementatie zou je hier de URL van de geüploade afbeelding krijgen
-            // Voor nu gebruiken we een lokale URL als demonstratie
-            const localImageUrl = reader.result;
-            setImageUrl(localImageUrl);
-            onImageUploaded(localImageUrl);
-            setUploading(false);
-          }
-        }, 1000);
-      };
-      
-      reader.onerror = () => {
-        setError('Fout bij het lezen van het bestand');
-        setUploading(false);
-      };
-      
-      reader.readAsDataURL(file);
-      
-      // In een echte implementatie zou je dit gebruiken:
-      /*
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      
-      const { error, data } = await supabase.storage
-        .from('images')
-        .upload(filePath, file, {
-          onUploadProgress: (progress) => {
-            const percentage = Math.round((progress.loaded / progress.total) * 100);
-            setProgress(percentage);
-          },
-        });
-        
-      if (error) {
-        throw error;
-      }
-      
-      const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(filePath);
-      
-      setImageUrl(publicUrl);
-      onImageUploaded(publicUrl);
-      */
-    } catch (error: any) {
-      setError(error.message || 'Er is een fout opgetreden bij het uploaden');
-    } finally {
-      setUploading(false);
+// Helper functie om afbeeldingen vooraf te laden
+const preloadImage = (src: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (!src || src === '' || src.startsWith('data:')) {
+      resolve(true);
+      return;
     }
-  }, [onImageUploaded]);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles && acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      
-      // Check bestandstype
-      if (!file.type.startsWith('image/')) {
-        setError('Alleen afbeeldingsbestanden zijn toegestaan');
-        return;
-      }
-      
-      // Check bestandsgrootte (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Afbeelding mag niet groter zijn dan 5MB');
-        return;
-      }
-      
-      uploadImage(file);
+    // Als de afbeelding al in de cache zit, hoeven we deze niet opnieuw te laden
+    if (imageCache[src]) {
+      resolve(true);
+      return;
     }
-  }, [uploadImage]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
-    onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
-    },
-    maxFiles: 1
+    const img = new Image();
+    img.onload = () => {
+      imageCache[src] = true;
+      resolve(true);
+    };
+    img.onerror = () => {
+      resolve(false);
+    };
+    img.src = src;
   });
+};
 
-  const handleManualUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setImageUrl(url);
-    onImageUploaded(url);
+// Laad alle mediabibliotheek afbeeldingen vooraf in de cache
+const preloadMediaLibraryImages = () => {
+    try {
+    const mediaItems = JSON.parse(localStorage.getItem(MEDIA_STORAGE_KEY) || '[]');
+    mediaItems.forEach((item: any) => {
+      if (item.url && item.type && item.type.startsWith('image/')) {
+        preloadImage(item.url);
+      }
+    });
+  } catch (error) {
+    console.error('Error preloading media library images:', error);
+  }
+};
+
+// Roep dit aan bij het laden van de app
+preloadMediaLibraryImages();
+
+export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploaderProps) {
+  const [imageUrl, setImageUrl] = useState(defaultValue);
+  const [inputUrl, setInputUrl] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [isPreloading, setIsPreloading] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showMediaSelector, setShowMediaSelector] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Voorlaad de afbeelding bij het initialiseren
+  useEffect(() => {
+    if (defaultValue) {
+      setImageUrl(defaultValue);
+      
+      setIsPreloading(true);
+      preloadImage(defaultValue).then((success) => {
+        setIsPreloading(false);
+        if (!success) {
+          console.warn(`Kon afbeelding niet laden: ${defaultValue}`);
+        }
+      });
+    } else {
+      setIsPreloading(false);
+    }
+  }, [defaultValue]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+      
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      setImageUrl(result);
+      onImageUploaded(result);
+      
+      // Voeg toe aan media bibliotheek
+      try {
+        const mediaItems = JSON.parse(localStorage.getItem(MEDIA_STORAGE_KEY) || '[]');
+        const newMediaItem = {
+          id: uuidv4(),
+          name: file.name,
+          url: result,
+          type: file.type,
+          size: file.size,
+          uploadDate: new Date().toISOString()
+        };
+        
+        mediaItems.push(newMediaItem);
+        localStorage.setItem(MEDIA_STORAGE_KEY, JSON.stringify(mediaItems));
+      } catch (error) {
+        console.error('Error adding to media library:', error);
+      }
+      
+      setIsUploading(false);
+    };
+
+    reader.onerror = () => {
+      toast.error('Er is een fout opgetreden bij het uploaden.');
+      setIsUploading(false);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleUrlSubmit = () => {
+    if (!inputUrl) return;
+    
+    try {
+      // Controleer of het een geldige URL is (basic controle)
+      new URL(inputUrl);
+      
+      setIsPreloading(true);
+      preloadImage(inputUrl).then((success) => {
+        setIsPreloading(false);
+        
+        if (success) {
+          setImageUrl(inputUrl);
+          onImageUploaded(inputUrl);
+          setInputUrl('');
+          toast.success('Afbeelding URL toegevoegd');
+        } else {
+          toast.error('Kon de afbeelding niet laden. Controleer de URL.');
+        }
+      });
+    } catch (error) {
+      toast.error('Voer een geldige URL in');
+    }
   };
 
   const clearImage = () => {
     setImageUrl('');
     onImageUploaded('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const openMediaLibrary = () => {
+    // Toon de media selector modal
+    window.open('/dashboard/media', '_blank');
+  };
+
+  const handleImageSelected = (url: string) => {
+    setImageUrl(url);
+    onImageUploaded(url);
+    setIsPreloading(false);
   };
 
   return (
-    <div className="space-y-2">
-      {label && <div className="text-sm font-medium mb-1">{label}</div>}
-      
-      <div className="space-y-2">
-        <div 
-          {...getRootProps()} 
-          className={`border-2 border-dashed rounded-md p-4 text-center cursor-pointer transition-colors
-            ${isDragActive ? 'border-primary bg-primary/5' : 'border-input hover:border-primary/50'}`}
-        >
-          <input {...getInputProps()} />
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="flex items-center gap-2"
+          >
+            <ImagePlus size={16} />
+            {isUploading ? 'Uploading...' : 'Bestand kiezen'}
+          </Button>
           
-          {uploading ? (
-            <div className="p-4 space-y-2">
-              <div className="flex justify-center">
-                <Upload className="h-10 w-10 text-muted-foreground animate-pulse" />
-              </div>
-              <div className="text-sm text-muted-foreground">Uploaden... {progress}%</div>
-              <Progress value={progress} className="h-2" />
+          <Input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          
+          <Button 
+            type="button" 
+            variant="outline"
+            onClick={openMediaLibrary}
+          >
+            Media bibliotheek
+          </Button>
+          
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setShowMediaSelector(true)}
+          >
+            Kies uit bibliotheek
+          </Button>
+        </div>
+      </div>
+      
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <Label htmlFor="imageUrl">Of voeg een URL toe</Label>
+          <Input
+            id="imageUrl"
+            type="url"
+            placeholder="https://example.com/image.jpg"
+            value={inputUrl}
+            onChange={(e) => setInputUrl(e.target.value)}
+          />
+        </div>
+        <Button 
+          type="button" 
+          onClick={handleUrlSubmit}
+          variant="secondary"
+          className="flex items-center gap-2"
+          disabled={isPreloading}
+        >
+          <LinkIcon size={16} />
+          Toevoegen
+        </Button>
+      </div>
+          
+      {imageUrl && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 truncate text-sm text-muted-foreground">
+              {imageUrl.startsWith('data:') 
+                ? 'Geüploade afbeelding' 
+                : imageUrl}
             </div>
-          ) : imageUrl ? (
-            <div className="relative">
-              <img 
-                src={imageUrl} 
-                alt="Geüploade afbeelding" 
-                className="max-h-40 mx-auto object-contain"
-                onError={() => setError('Kan de afbeelding niet laden')}
-              />
-              <Button 
-                variant="destructive" 
-                size="icon" 
-                className="absolute top-0 right-0 h-6 w-6" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  clearImage();
-                }}
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPreview(!showPreview)}
+                className="h-8 w-8 p-0"
               >
-                <X className="h-4 w-4" />
+                <Eye size={16} />
+                <span className="sr-only">Voorbeeld</span>
+              </Button>
+              <Button 
+                variant="ghost"
+                size="sm"
+                onClick={clearImage}
+                className="h-8 w-8 p-0 text-destructive"
+              >
+                <X size={16} />
+                <span className="sr-only">Verwijderen</span>
               </Button>
             </div>
-          ) : (
-            <div className="p-4 space-y-2">
-              <div className="flex justify-center">
-                <Image className="h-10 w-10 text-muted-foreground" />
               </div>
-              <div>
-                <p className="text-sm font-medium">
-                  {isDragActive ? 'Sleep de afbeelding hierheen...' : 'Sleep een afbeelding hierheen of klik om te selecteren'}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  PNG, JPG, GIF of WEBP (max. 5MB)
-                </p>
+          
+          {showPreview && (
+            <div className="relative w-full h-40 bg-muted rounded-md overflow-hidden">
+              {isPreloading ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
               </div>
+              ) : (
+                <img 
+                  src={imageUrl} 
+                  alt="Voorbeeld" 
+                  className="w-full h-full object-contain"
+                  onError={() => toast.error('Kon afbeelding niet laden')}
+                />
+              )}
             </div>
           )}
         </div>
-        
-        {error && <div className="text-sm text-destructive">{error}</div>}
-        
-        <div className="flex flex-col space-y-2">
-          <div className="text-sm text-muted-foreground">Of voer een URL in:</div>
-          <div className="flex gap-2">
-            <Input 
-              type="text" 
-              value={imageUrl} 
-              onChange={handleManualUrlChange}
-              placeholder="https://example.com/image.jpg" 
-              className="flex-1"
-            />
-            {imageUrl && (
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={clearImage}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+      )}
+
+      {/* Media Selector */}
+      <MediaSelector 
+        open={showMediaSelector}
+        onOpenChange={setShowMediaSelector}
+        onSelect={handleImageSelected}
+      />
     </div>
   );
 } 

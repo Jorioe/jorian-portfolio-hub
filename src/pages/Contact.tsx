@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/form";
 import { toast } from "sonner";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
+import { useContactMessages } from "@/lib/ContactContext";
+import emailjs from '@emailjs/browser';
+import { v4 as uuidv4 } from 'uuid';
 
 // Add CSS to ensure form labels stay black but error messages are red
 import "./contact.css";
@@ -32,6 +35,7 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const { addMessage } = useContactMessages();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -47,39 +51,74 @@ export default function Contact() {
     setIsSubmitting(true);
     setError(null);
     
-    // Create the mailto link with all form data
-    const recipientEmail = "jorian.bracke@example.com"; // Replace with your actual email
-    const subject = `Website Contact: ${data.subject}`;
-    const body = `
+    // EmailJS service IDs
+    const serviceId = 'service_portfolio'; // Vervang met je eigen service ID
+    const templateId = 'template_contact'; // Vervang met je eigen template ID
+    const publicKey = 'public_key'; // Vervang met je eigen public key
+    
+    // Bereid de email template parameters voor
+    const templateParams = {
+      from_name: data.name,
+      from_email: data.email,
+      subject: data.subject,
+      message: data.message
+    };
+
+    // Voeg bericht toe aan de contactberichten
+    const newMessage = {
+      id: uuidv4(),
+      name: data.name,
+      email: data.email,
+      subject: data.subject,
+      message: data.message,
+      date: new Date().toISOString(),
+      isRead: false
+    };
+    
+    // Stuur email met EmailJS
+    emailjs.send(serviceId, templateId, templateParams, publicKey)
+      .then(() => {
+        // Voeg bericht toe aan de contactberichten database
+        addMessage(newMessage);
+        
+        // Toon een success bericht
+        toast.success("Bericht is succesvol verzonden!");
+        form.reset();
+      })
+      .catch((err) => {
+        console.error("Error:", err);
+        
+        // Probeer als backup via een mailto link
+        try {
+          const recipientEmail = "jorian.bracke@example.com"; // Vervang met je echte email
+          const subject = `Website Contact: ${data.subject}`;
+          const body = `
 Naam: ${data.name}
 Email: ${data.email}
 
 Bericht:
 ${data.message}
-    `;
-    
-    // Email format options:
-    // 1. Using mailto: for simple client-side solution
-    // 2. Using a serverless function (like Netlify Forms or Formspree)
-    // Here we're using mailto as the simplest approach
-    
-    try {
-      // Create and click a hidden link to trigger the email client
-      const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.location.href = mailtoLink;
-      
-      // Show success message and reset form
-      setTimeout(() => {
-        toast.success("Bericht is verstuurd via je email client!");
-        form.reset();
+          `;
+          
+          // Maak een mailto link en klik erop
+          const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+          window.location.href = mailtoLink;
+          
+          // Alsnog het bericht toevoegen aan berichten
+          addMessage(newMessage);
+          
+          // Toon success message en reset form
+          toast.success("Bericht wordt geopend in je email client!");
+          form.reset();
+        } catch (fallbackErr) {
+          console.error("Fallback error:", fallbackErr);
+          setError("Er is een fout opgetreden bij het verzenden van je bericht. Probeer het later nog eens.");
+          toast.error("Fout bij het verzenden van bericht");
+        }
+      })
+      .finally(() => {
         setIsSubmitting(false);
-      }, 1000);
-    } catch (err) {
-      console.error("Error:", err);
-      setError("Er is een fout opgetreden bij het verzenden van je bericht.");
-      toast.error("Fout bij het verzenden van bericht");
-      setIsSubmitting(false);
-    }
+      });
   }
 
   return (

@@ -44,10 +44,11 @@ import { CategoryType } from '@/data/projects';
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
-  const { projects, deleteProject } = useProjects();
+  const { projects, deleteProject, resetProjects } = useProjects();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const getCategoryLabel = (category: CategoryType): string => {
     const categoryMap: Record<CategoryType, string> = {
@@ -82,6 +83,95 @@ export default function AdminDashboard() {
     window.open(`/projects/${id}`, '_blank');
   };
 
+  const handleExportAsCode = () => {
+    // Pretty-print de projecten als TypeScript code
+    const projectsCode = `// Dit bestand is geëxporteerd vanuit het admin dashboard
+// Kopieer de inhoud naar src/data/projects.ts om wijzigingen permanent op te slaan
+
+import { CategoryType } from '@/data/projects';
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  categories: CategoryType[];
+  date: string;
+  content: Array<{
+    type: string;
+    content?: string;
+    content2?: string;
+    image?: string;
+    imgtext?: string;
+    imgtext2?: string;
+    aditionalContent?: string;
+  }>;
+  technologies?: string[];
+  skills?: string[];
+  githubLink?: string;
+  instagramLink?: string;
+  demoLink?: string;
+  fullDescription?: string;
+}
+
+export type { CategoryType };
+
+export const projects: Project[] = ${JSON.stringify(projects, null, 2)
+      .replace(/"([^"]+)":/g, '$1:') // Verwijder quotes van keys
+      .replace(/"([^"]+)"/g, "'$1'")}; // Vervang dubbele quotes door enkele quotes
+`;
+    
+    // Kopieer naar clipboard
+    navigator.clipboard.writeText(projectsCode)
+      .then(() => {
+        toast({
+          title: "Code gekopieerd",
+          description: "De projectdata is als TypeScript code gekopieerd naar het klembord. Ook wordt een bestand gedownload.",
+        });
+      })
+      .catch((err) => {
+        console.error('Kon niet kopiëren naar clipboard:', err);
+        toast({
+          title: "Kon niet kopiëren",
+          description: "Er ging iets mis bij het kopiëren naar klembord, maar het bestand wordt wel gedownload.",
+          variant: "destructive"
+        });
+      });
+      
+    // Download als bestand
+    const blob = new Blob([projectsCode], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'projects.ts';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Voeg een nieuwe functie toe om uitleg te tonen
+  const showExportInstructions = () => {
+    toast({
+      title: "Wijzigingen opslaan in code",
+      description: "Klik op 'Exporteer als Code' om je huidige projectdata te exporteren. Het bestand wordt gedownload en de inhoud wordt naar je klembord gekopieerd. Vervang de inhoud van src/data/projects.ts met deze code om je wijzigingen permanent op te slaan.",
+      duration: 10000, // 10 seconden tonen
+    });
+  };
+
+  const handleResetProjects = () => {
+    resetProjects();
+    setShowResetConfirm(false);
+    toast({
+      title: 'Projecten gereset',
+      description: 'Projecten zijn gereset naar de initiële data. Herlaad de pagina om wijzigingen in projects.ts te zien.',
+    });
+  };
+
+  const handleReloadPage = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col gap-8">
@@ -101,9 +191,39 @@ export default function AdminDashboard() {
                   Beheer de projecten die worden weergegeven op je portfolio.
                 </CardDescription>
               </div>
-              <Button onClick={() => navigate('/dashboard/project/new')} className="flex items-center gap-2 w-full sm:w-auto">
-                <Plus size={16} /> Nieuw Project
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                      Projecten Resetten
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Weet je het zeker?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Alle wijzigingen die je via het dashboard hebt gemaakt gaan verloren. Je kunt eerst je aanpassingen exporteren als code om ze te bewaren.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleResetProjects}>Doorgaan met resetten</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <Button onClick={handleExportAsCode} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                  Exporteer als Code
+                </Button>
+                <Button onClick={showExportInstructions} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                  Uitleg
+                </Button>
+                <Button onClick={handleReloadPage} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                  Pagina Herladen
+                </Button>
+                <Button onClick={() => navigate('/dashboard/project/new')} className="flex items-center gap-2 w-full sm:w-auto">
+                  <Plus size={16} /> Nieuw Project
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -267,18 +387,65 @@ export default function AdminDashboard() {
                   </div>
                   <h3 className="font-medium text-sm">Media Bibliotheek</h3>
                   <p className="text-xs text-muted-foreground mt-1 mb-3">Beheer afbeeldingen en media</p>
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/dashboard/media')}>
+                    Openen
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                      <path d="M8 3H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1" />
+                      <path d="M12 17v-6" />
+                      <path d="M9 11h6" />
+                      <path d="M11 3v4a1 1 0 0 1-1 1H6" />
+                      <path d="M13 3v4a1 1 0 0 0 1 1h4" />
+                    </svg>
+                  </div>
+                  <h3 className="font-medium text-sm">Contactberichten</h3>
+                  <p className="text-xs text-muted-foreground mt-1 mb-3">Bekijk ontvangen berichten</p>
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/dashboard/contact')}>
+                    Bekijken
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                      <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+                      <path d="m9 12 2 2 4-4" />
+                    </svg>
+                  </div>
+                  <h3 className="font-medium text-sm">System Status</h3>
+                  <p className="text-xs text-muted-foreground mt-1 mb-3">Controleer de website status</p>
                   <Button variant="outline" size="sm" className="w-full" onClick={() => {
                     toast({
-                      title: "Media bibliotheek",
-                      description: "Opent binnenkort in een nieuwe interface"
+                      title: "Systeem status",
+                      description: "Alle services zijn operationeel",
+                      variant: "default"
                     });
-                    
-                    // Dispatch het nieuwe page refresh event
-                    window.dispatchEvent(new CustomEvent('app:refresh-page', {
-                      detail: { route: '/dashboard/media' }
-                    }));
                   }}>
-                    Openen
+                    Controleren
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-medium text-sm">Homepagina Editor</h3>
+                  <p className="text-xs text-muted-foreground mt-1 mb-3">Bewerk de content van de homepagina</p>
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/dashboard/home-editor')}>
+                    Bewerken
                   </Button>
                 </CardContent>
               </Card>
@@ -312,64 +479,10 @@ export default function AdminDashboard() {
                   </Button>
                 </CardContent>
               </Card>
-
-              <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-                      <path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z" />
-                      <path d="M10 2c1 .5 2 2 2 5" />
-                    </svg>
-                  </div>
-                  <h3 className="font-medium text-sm">Cache leegmaken</h3>
-                  <p className="text-xs text-muted-foreground mt-1 mb-3">Vernieuw de cache van je website</p>
-                  <Button variant="outline" size="sm" className="w-full"
-                    onClick={() => {
-                      // Toon loading toast
-                      toast({
-                        title: "Cache wordt leeggemaakt",
-                        description: "Even geduld..."
-                      });
-                      
-                      // Gebruik de nieuwe refresh functie
-                      setTimeout(() => {
-                        window.dispatchEvent(new CustomEvent('app:refresh-page'));
-                        toast({
-                          title: "Cache geleegd",
-                          description: "Alle content wordt nu vers opgehaald"
-                        });
-                      }, 1500);
-                    }}>
-                    Leegmaken
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-                      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                      <line x1="3" x2="21" y1="9" y2="9" />
-                      <line x1="9" x2="9" y1="21" y2="9" />
-                    </svg>
-                  </div>
-                  <h3 className="font-medium text-sm">Themawissel</h3>
-                  <p className="text-xs text-muted-foreground mt-1 mb-3">Verander het uiterlijk van je site</p>
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => {
-                    toast({
-                      title: "Thema instellingen",
-                      description: "De thema-editor wordt geopend"
-                    });
-                  }}>
-                    Aanpassen
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
             
             {/* Tweede rij tools */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+            {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
               <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-4 flex flex-col items-center text-center">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
@@ -378,42 +491,14 @@ export default function AdminDashboard() {
                       <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
                     </svg>
                   </div>
-                  <h3 className="font-medium text-sm">CV Editor</h3>
-                  <p className="text-xs text-muted-foreground mt-1 mb-3">Werk je CV bij</p>
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => {
-                    toast({
-                      title: "CV Editor",
-                      description: "Bewerk je CV online"
-                    });
-                  }}>
-                    Bewerken
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-                      <path d="M8 3H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1" />
-                      <path d="M12 17v-6" />
-                      <path d="M9 11h6" />
-                      <path d="M11 3v4a1 1 0 0 1-1 1H6" />
-                      <path d="M13 3v4a1 1 0 0 0 1 1h4" />
-                    </svg>
-                  </div>
-                  <h3 className="font-medium text-sm">Contactberichten</h3>
-                  <p className="text-xs text-muted-foreground mt-1 mb-3">Bekijk ontvangen berichten</p>
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => {
-                    toast({
-                      title: "Contactberichten",
-                      description: "Er zijn geen nieuwe berichten"
-                    });
-                  }}>
+                  <h3 className="font-medium text-sm">Portfolio Content</h3>
+                  <p className="text-xs text-muted-foreground mt-1 mb-3">Werk aan je portfolio content</p>
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/projects')}>
                     Bekijken
                   </Button>
                 </CardContent>
               </Card>
+
 
               <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-4 flex flex-col items-center text-center">
@@ -461,7 +546,7 @@ export default function AdminDashboard() {
                   </Button>
                 </CardContent>
               </Card>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
@@ -547,7 +632,7 @@ export default function AdminDashboard() {
                         <path d="m16.24 16.24 2.83 2.83" />
                         <path d="M2 12h4" />
                         <path d="M18 12h4" />
-                        <path d="m4.93 19.07 2.83-2.83" />
+                        <path d="m4.93 19.071 2.83-2.83" />
                         <path d="m16.24 7.76 2.83-2.83" />
                       </svg>
                     </div>
