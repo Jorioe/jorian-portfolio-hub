@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { useProjects } from '@/lib/ProjectContext';
@@ -49,6 +49,8 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportedCode, setExportedCode] = useState("");
 
   const getCategoryLabel = (category: CategoryType): string => {
     const categoryMap: Record<CategoryType, string> = {
@@ -84,11 +86,9 @@ export default function AdminDashboard() {
   };
 
   const handleExportAsCode = () => {
-    // Pretty-print de projecten als TypeScript code
-    const projectsCode = `// Dit bestand is geëxporteerd vanuit het admin dashboard
-// Kopieer de inhoud naar src/data/projects.ts om wijzigingen permanent op te slaan
-
-import { CategoryType } from '@/data/projects';
+    console.log("Export als code functie aangeroepen");
+    // Gebruik dezelfde code-generatie als in handleShowExportModal
+    const projectsCode = `export type CategoryType = "development" | "design" | "research" | "data" | "rest";
 
 export interface Project {
   id: string;
@@ -98,56 +98,71 @@ export interface Project {
   categories: CategoryType[];
   date: string;
   content: Array<{
-    type: string;
+    type:
+      | "text"
+      | "break"
+      | "subtitle"
+      | "small-subtitle"
+      | "quote-top"
+      | "quote"
+      | "quote-bottom"
+      | "opsom-text-top"
+      | "opsom-text"
+      | "opsom-text-bottom"
+      | "flex-text"
+      | "image";
     content?: string;
     content2?: string;
     image?: string;
-    imgtext?: string;
-    imgtext2?: string;
-    aditionalContent?: string;
   }>;
+  aditionalContent?: string;
+  imgtext?: string;
+  imgtext2?: string;
+  subtitle?: string;
   technologies?: string[];
-  skills?: string[];
   githubLink?: string;
   instagramLink?: string;
   demoLink?: string;
-  fullDescription?: string;
+  skills?: string[];
 }
-
-export type { CategoryType };
 
 export const projects: Project[] = ${JSON.stringify(projects, null, 2)
       .replace(/"([^"]+)":/g, '$1:') // Verwijder quotes van keys
-      .replace(/"([^"]+)"/g, "'$1'")}; // Vervang dubbele quotes door enkele quotes
+      .replace(/"([^"]+)"/g, "'$1'") // Vervang dubbele quotes door enkele quotes
+      .replace(/\n/g, '\n  ') // Juiste indenting toevoegen
+      .replace(/\}\]/g, '  }\n]')}; // Juiste sluithaakjes formattering
 `;
     
-    // Kopieer naar clipboard
-    navigator.clipboard.writeText(projectsCode)
-      .then(() => {
-        toast({
-          title: "Code gekopieerd",
-          description: "De projectdata is als TypeScript code gekopieerd naar het klembord. Ook wordt een bestand gedownload.",
-        });
-      })
-      .catch((err) => {
-        console.error('Kon niet kopiëren naar clipboard:', err);
-        toast({
-          title: "Kon niet kopiëren",
-          description: "Er ging iets mis bij het kopiëren naar klembord, maar het bestand wordt wel gedownload.",
-          variant: "destructive"
-        });
-      });
+    console.log("Code gegenereerd, lengte:", projectsCode.length);
+    
+    try {
+      // Download als bestand
+      const blob = new Blob([projectsCode], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'projects.ts';
+      console.log("Download link aangemaakt:", link);
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        console.log("Download link verwijderd");
+      }, 100);
       
-    // Download als bestand
-    const blob = new Blob([projectsCode], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'projects.ts';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      toast({
+        title: "Bestand gedownload",
+        description: "Het bestand projects.ts is gedownload. Vervang de inhoud van src/data/projects.ts met dit bestand om je wijzigingen permanent op te slaan.",
+      });
+    } catch (err) {
+      console.error('Fout bij het downloaden van het bestand:', err);
+      toast({
+        title: "Fout bij exporteren",
+        description: "Er is een fout opgetreden bij het exporteren van de code.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Voeg een nieuwe functie toe om uitleg te tonen
@@ -170,6 +185,92 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
 
   const handleReloadPage = () => {
     window.location.reload();
+  };
+
+  // Functie om Nederlandse datums te parsen
+  const parseDutchDate = (dateString: string) => {
+    // Mapping van Nederlandse maandnamen naar nummers
+    const monthMapping: Record<string, number> = {
+      'januari': 0, 'februari': 1, 'maart': 2, 'april': 3, 'mei': 4, 'juni': 5,
+      'juli': 6, 'augustus': 7, 'september': 8, 'oktober': 9, 'november': 10, 'december': 11
+    };
+    
+    try {
+      // Splits de string in maand en jaar
+      const parts = dateString.toLowerCase().split(' ');
+      if (parts.length === 2) {
+        const month = monthMapping[parts[0]];
+        const year = parseInt(parts[1]);
+        
+        if (!isNaN(month) && !isNaN(year)) {
+          return new Date(year, month).getTime();
+        }
+      }
+      
+      // Als het reguliere formaat is, probeer direct te parsen
+      return new Date(dateString).getTime();
+    } catch (e) {
+      console.error("Error parsing date:", dateString);
+      return 0; // Fallback voor ongeldige datums
+    }
+  };
+  
+  // Sorteer de projecten op datum
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort((a, b) => parseDutchDate(b.date) - parseDutchDate(a.date));
+  }, [projects]);
+  
+  // Het nieuwste project is nu het eerste in de gesorteerde lijst
+  const newestProject = sortedProjects.length > 0 ? sortedProjects[0] : null;
+
+  const handleShowExportModal = () => {
+    // Pretty-print de projecten als TypeScript code
+    const projectsCode = `export type CategoryType = "development" | "design" | "research" | "data" | "rest";
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  categories: CategoryType[];
+  date: string;
+  content: Array<{
+    type:
+      | "text"
+      | "break"
+      | "subtitle"
+      | "small-subtitle"
+      | "quote-top"
+      | "quote"
+      | "quote-bottom"
+      | "opsom-text-top"
+      | "opsom-text"
+      | "opsom-text-bottom"
+      | "flex-text"
+      | "image";
+    content?: string;
+    content2?: string;
+    image?: string;
+  }>;
+  aditionalContent?: string;
+  imgtext?: string;
+  imgtext2?: string;
+  subtitle?: string;
+  technologies?: string[];
+  githubLink?: string;
+  instagramLink?: string;
+  demoLink?: string;
+  skills?: string[];
+}
+
+export const projects: Project[] = ${JSON.stringify(projects, null, 2)
+      .replace(/"([^"]+)":/g, '$1:') // Verwijder quotes van keys
+      .replace(/"([^"]+)"/g, "'$1'") // Vervang dubbele quotes door enkele quotes
+      .replace(/\n/g, '\n  ') // Juiste indenting toevoegen
+      .replace(/\}\]/g, '  }\n]')}; // Juiste sluithaakjes formattering
+`;
+    setExportedCode(projectsCode);
+    setShowExportModal(true);
   };
 
   return (
@@ -213,6 +314,9 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
                 </AlertDialog>
                 <Button onClick={handleExportAsCode} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
                   Exporteer als Code
+                </Button>
+                <Button onClick={handleShowExportModal} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                  Toon Code
                 </Button>
                 <Button onClick={showExportInstructions} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
                   Uitleg
@@ -619,9 +723,7 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
                     <div>
                       <p className="text-sm text-muted-foreground">Nieuwste project</p>
                       <h3 className="text-xl font-bold mt-1 truncate max-w-[160px]">
-                        {projects.length > 0 
-                          ? projects.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.title
-                          : "Geen projecten"}
+                        {newestProject ? newestProject.title : "Geen projecten"}
                       </h3>
                     </div>
                     <div className="bg-primary/10 p-2 rounded-full">
@@ -639,9 +741,7 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
                   </div>
                   <div className="text-xs text-muted-foreground flex items-center mt-3">
                     <span>
-                      {projects.length > 0 
-                        ? new Date(projects.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.date).toLocaleDateString('nl-NL')
-                        : "Geen datum"}
+                      {newestProject ? new Date(newestProject.date).toLocaleDateString('nl-NL') : "Geen datum"}
                     </span>
                   </div>
                 </CardContent>
@@ -753,6 +853,49 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
           </CardContent>
         </Card>
       </div>
+
+      {/* Export Code Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background p-6 rounded-lg shadow-lg w-11/12 max-w-4xl max-h-[90vh] flex flex-col">
+            <h2 className="text-xl font-bold mb-4">Geëxporteerde Code</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Kopieer deze code en vervang de inhoud van src/data/projects.ts om je wijzigingen permanent op te slaan.
+            </p>
+            <div className="relative flex-grow overflow-auto">
+              <pre className="p-4 bg-muted text-sm rounded-md overflow-auto max-h-[60vh]">
+                {exportedCode}
+              </pre>
+            </div>
+            <div className="flex justify-end gap-4 mt-4">
+              <Button 
+                onClick={() => {
+                  try {
+                    navigator.clipboard.writeText(exportedCode);
+                    toast({
+                      title: "Gekopieerd naar klembord",
+                      description: "De code is gekopieerd naar je klembord."
+                    });
+                  } catch (e) {
+                    console.error("Kon niet naar klembord kopiëren:", e);
+                    toast({
+                      title: "Kopiëren mislukt",
+                      description: "Selecteer de code handmatig en kopieer met Ctrl+C",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                variant="outline"
+              >
+                Kopiëren
+              </Button>
+              <Button onClick={() => setShowExportModal(false)}>
+                Sluiten
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

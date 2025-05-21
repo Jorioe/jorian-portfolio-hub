@@ -58,8 +58,36 @@ export default function Projects() {
 
     // Then sort the filtered projects by date
     return [...filtered].sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
+      // Correcte sortering voor Nederlandse datums zoals "Januari 2025"
+      const parseDutchDate = (dateString: string) => {
+        // Mapping van Nederlandse maandnamen naar nummers
+        const monthMapping: Record<string, number> = {
+          'januari': 0, 'februari': 1, 'maart': 2, 'april': 3, 'mei': 4, 'juni': 5,
+          'juli': 6, 'augustus': 7, 'september': 8, 'oktober': 9, 'november': 10, 'december': 11
+        };
+        
+        try {
+          // Splits de string in maand en jaar
+          const parts = dateString.toLowerCase().split(' ');
+          if (parts.length === 2) {
+            const month = monthMapping[parts[0]];
+            const year = parseInt(parts[1]);
+            
+            if (!isNaN(month) && !isNaN(year)) {
+              return new Date(year, month).getTime();
+            }
+          }
+          
+          // Als het reguliere formaat is, probeer direct te parsen
+          return new Date(dateString).getTime();
+        } catch (e) {
+          console.error("Error parsing date:", dateString);
+          return 0; // Fallback voor ongeldige datums
+        }
+      };
+      
+      const dateA = parseDutchDate(a.date);
+      const dateB = parseDutchDate(b.date);
       return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
     });
   }, [searchQuery, selectedCategories, sortOrder, projects]);

@@ -294,7 +294,7 @@ export const projects: Project[] = [
     ],
     technologies: ["Figma", "Adobe XD", "Sketch", "InVision", "User Testing"],
     skills: ["Figma", "UI/UX", "Prototyping", "Market Research", "Javascript", "React", "User Testing"],
-    demoLink: "https://demo-project.com"
+    demoLink: "/projects/nos-project/index.html"
   },
   // {
   //   id: "5",
