@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Project, projects as initialProjects } from '@/data/projects';
+import { projectsService } from './database';
+import { useToast } from '@/components/ui/use-toast';
 
 // Definieer het type voor de context
 interface ProjectContextType {
@@ -10,10 +12,8 @@ interface ProjectContextType {
   updateProject: (project: Project) => void;
   deleteProject: (id: string) => void;
   resetProjects: () => void;
+  migrateToDatabase: () => Promise<void>; // Nieuwe functie voor migratie
 }
-
-// Lokale opslag key
-const STORAGE_KEY = 'portfolio_projects';
 
 // Creëer de context met een default waarde
 const ProjectContext = createContext<ProjectContextType>({
@@ -24,101 +24,294 @@ const ProjectContext = createContext<ProjectContextType>({
   updateProject: () => {},
   deleteProject: () => {},
   resetProjects: () => {},
+  migrateToDatabase: async () => {},
 });
 
 // Hook om de context te gebruiken
 export const useProjects = () => useContext(ProjectContext);
 
-// Helper om projecten op te halen uit lokale opslag
-const getStoredProjects = (): Project[] => {
-  try {
-    const storedData = localStorage.getItem(STORAGE_KEY);
-    if (storedData) {
-      return JSON.parse(storedData);
-    }
-  } catch (error) {
-    console.error('Error loading projects from localStorage:', error);
-  }
-  return initialProjects;
-};
-
-// Helper om projecten op te slaan in lokale opslag
-const storeProjects = (projects: Project[]) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-  } catch (error) {
-    console.error('Error storing projects in localStorage:', error);
-  }
-};
-
 // Provider component
 export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   // Laad projecten bij initialisatie
   useEffect(() => {
+    loadProjectsFromDatabase();
+  }, []);
+
+  // Functie om projecten uit database te laden
+  const loadProjectsFromDatabase = async () => {
+    setLoading(true);
     try {
-      const loadedProjects = getStoredProjects();
-      setProjects(loadedProjects);
+      console.log('Loading projects from database...');
+      const { data, error } = await projectsService.getProjects();
+      
+      console.log('Database response:', { 
+        dataExists: !!data, 
+        dataLength: data?.length || 0, 
+        errorExists: !!error 
+      });
+      
+      if (error) {
+        console.error('Error loading projects from database:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        toast({
+          title: 'Fout bij laden',
+          description: `Kon projecten niet laden uit de database: ${error.message || error.code || 'Onbekende fout'}`,
+          variant: 'destructive',
+        });
+        
+        console.log('Falling back to initial projects');
+        setProjects(initialProjects);
+      } else if (data && data.length > 0) {
+        console.log('Projects loaded from database:', data);
+        try {
+          // Extra validatie van projecten uit de database
+          data.forEach((project, index) => {
+            console.log(`Validating project ${index}:`, project.id, project.title);
+            if (!project.id || !project.title || !project.description) {
+              console.warn(`Project ${index} missing required fields:`, project);
+            }
+            
+            // Check dat content een array is
+            if (!Array.isArray(project.content)) {
+              console.error(`Project ${index} content is not an array:`, project.content);
+            }
+          });
+          
+          setProjects(data);
+          console.log('Projects state updated with database data');
+        } catch (validationError) {
+          console.error('Error validating projects from database:', validationError);
+          setProjects(initialProjects);
+        }
+      } else {
+        // Geen projecten in database, probeer te repareren met initiële projecten
+        console.log('No projects in database, attempting repair...');
+        
+        try {
+          const { success, error: repairError } = await projectsService.repairDatabaseWithInitialData();
+          
+          if (success) {
+            console.log('Database repaired successfully, loading repaired data');
+            // Laad de gerepareerde projecten
+            const { data: repairedData, error: reloadError } = await projectsService.getProjects();
+            
+            if (reloadError || !repairedData || repairedData.length === 0) {
+              console.error('Error loading repaired projects:', reloadError);
+              setProjects(initialProjects);
+            } else {
+              console.log('Repaired projects loaded successfully:', repairedData.length);
+              setProjects(repairedData);
+              
+              toast({
+                title: 'Database gerepareerd',
+                description: 'De projecten zijn hersteld uit de initiële data.',
+              });
+            }
+          } else {
+            console.error('Failed to repair database:', repairError);
+            setProjects(initialProjects);
+            
+            toast({
+              title: 'Fout bij reparatie',
+              description: 'Kon de database niet repareren, fallback naar initiële data.',
+              variant: 'destructive',
+            });
+          }
+        } catch (repairError) {
+          console.error('Error during database repair:', repairError);
+          setProjects(initialProjects);
+        }
+      }
     } catch (error) {
       console.error('Failed to load projects, using initial data:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       setProjects(initialProjects);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   // Functie om de volledige projectenlijst bij te werken
   const updateProjects = (newProjects: Project[]) => {
     setProjects(newProjects);
-    storeProjects(newProjects);
-    console.log('Projecten bijgewerkt:', newProjects);
+    // We updaten niet de hele lijst in de database - gebruik individuele CRUD operaties
   };
 
   // Functie om een enkel project toe te voegen
-  const addProject = (project: Project) => {
-    const updatedProjects = [...projects, project];
-    setProjects(updatedProjects);
-    storeProjects(updatedProjects);
-    console.log('Project toegevoegd:', project);
+  const addProject = async (project: Project) => {
+    setLoading(true);
+    try {
+      const { data, error } = await projectsService.addProject(project);
+      
+      if (error) {
+        console.error('Error adding project to database:', error);
+        toast({
+          title: 'Fout bij toevoegen',
+          description: 'Kon project niet toevoegen aan de database.',
+          variant: 'destructive',
+        });
+      } else {
+        console.log('Project toegevoegd:', data);
+        // Herlaad alle projecten om zeker te zijn van up-to-date data
+        await loadProjectsFromDatabase();
+        toast({
+          title: 'Project toegevoegd',
+          description: `${project.title} is toegevoegd aan de database.`,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to add project:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Functie om een enkel project bij te werken
-  const updateProject = (project: Project) => {
-    const updatedProjects = projects.map(p => p.id === project.id ? project : p);
-    setProjects(updatedProjects);
-    storeProjects(updatedProjects);
-    console.log('Project bijgewerkt:', project);
+  const updateProject = async (project: Project) => {
+    setLoading(true);
+    try {
+      const { data, error } = await projectsService.updateProject(project);
+      
+      if (error) {
+        console.error('Error updating project in database:', error);
+        toast({
+          title: 'Fout bij bijwerken',
+          description: 'Kon project niet bijwerken in de database.',
+          variant: 'destructive',
+        });
+      } else {
+        console.log('Project bijgewerkt:', data);
+        // Herlaad alle projecten om zeker te zijn van up-to-date data
+        await loadProjectsFromDatabase();
+        toast({
+          title: 'Project bijgewerkt',
+          description: `${project.title} is bijgewerkt in de database.`,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update project:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Functie om een project te verwijderen
-  const deleteProject = (id: string) => {
-    const updatedProjects = projects.filter(p => p.id !== id);
-    setProjects(updatedProjects);
-    storeProjects(updatedProjects);
-    console.log('Project verwijderd:', id);
+  const deleteProject = async (id: string) => {
+    setLoading(true);
+    try {
+      const { error } = await projectsService.deleteProject(id);
+      
+      if (error) {
+        console.error('Error deleting project from database:', error);
+        toast({
+          title: 'Fout bij verwijderen',
+          description: 'Kon project niet verwijderen uit de database.',
+          variant: 'destructive',
+        });
+      } else {
+        console.log('Project verwijderd:', id);
+        // Herlaad alle projecten om zeker te zijn van up-to-date data
+        await loadProjectsFromDatabase();
+        toast({
+          title: 'Project verwijderd',
+          description: 'Project is verwijderd uit de database.',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Functie om projecten te resetten naar de initiële data uit projects.ts
-  const resetProjects = () => {
-    // Gebruik rechtstreeks de geïmporteerde initialProjects
-    // Dit zorgt ervoor dat we altijd de laatst gecompileerde versie gebruiken
-    console.log('Reset naar initiële projecten:', initialProjects);
-    
-    // Verwijder eerst de opgeslagen projecten uit localStorage
+  // Functie om projecten te resetten naar de initiële data
+  const resetProjects = async () => {
+    setLoading(true);
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      const { error } = await projectsService.resetWithInitialData(initialProjects);
+      
+      if (error) {
+        console.error('Error resetting projects in database:', error);
+        toast({
+          title: 'Fout bij resetten',
+          description: 'Kon projecten niet resetten in de database.',
+          variant: 'destructive',
+        });
+      } else {
+        console.log('Projecten gereset naar initiële data');
+        // Herlaad alle projecten
+        await loadProjectsFromDatabase();
+        toast({
+          title: 'Projecten gereset',
+          description: 'Alle projecten zijn gereset naar de initiële data.',
+        });
+      }
     } catch (error) {
-      console.error('Error removing projects from localStorage:', error);
+      console.error('Failed to reset projects:', error);
+    } finally {
+      setLoading(false);
     }
-    
-    // Update de staat met de initiële projecten
-    setProjects(initialProjects);
-    console.log('Projecten gereset naar initiële data');
-    
-    // We slaan de initiële projecten niet opnieuw op in localStorage
-    // zodat bij een refresh de data opnieuw uit projects.ts wordt geladen
+  };
+
+  // Functie voor migratie van localStorage naar database
+  const migrateToDatabase = async () => {
+    setLoading(true);
+    try {
+      // Haal eerst lokaal opgeslagen projecten op
+      const localStorageKey = 'portfolio_projects';
+      const storedData = localStorage.getItem(localStorageKey);
+      
+      if (storedData) {
+        const localProjects = JSON.parse(storedData);
+        console.log('Migreren van localStorage projecten naar database:', localProjects);
+        
+        // Reset database met lokale projecten
+        const { error } = await projectsService.resetWithInitialData(localProjects);
+        
+        if (error) {
+          console.error('Error migrating projects to database:', error);
+          console.error('Error details:', JSON.stringify(error, null, 2));
+          toast({
+            title: 'Fout bij migratie',
+            description: `Kon projecten niet migreren naar de database: ${error.message || error.code || 'Onbekende fout'}`,
+            variant: 'destructive',
+          });
+        } else {
+          // Verwijder lokale opslag na succesvolle migratie
+          localStorage.removeItem(localStorageKey);
+          console.log('Projecten succesvol gemigreerd naar database');
+          
+          // Herlaad projecten uit database
+          await loadProjectsFromDatabase();
+          
+          toast({
+            title: 'Migratie voltooid',
+            description: 'Projecten zijn succesvol gemigreerd van localStorage naar de database.',
+          });
+        }
+      } else {
+        console.log('Geen lokaal opgeslagen projecten gevonden voor migratie');
+        toast({
+          title: 'Geen migratie nodig',
+          description: 'Geen lokaal opgeslagen projecten gevonden om te migreren.',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to migrate projects to database:', error);
+      console.error('Error details:', error instanceof Error ? error.message : JSON.stringify(error, null, 2));
+      
+      toast({
+        title: 'Fout bij migratie',
+        description: `Er is een onverwachte fout opgetreden: ${error instanceof Error ? error.message : 'Onbekende fout'}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -129,7 +322,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       addProject,
       updateProject,
       deleteProject,
-      resetProjects
+      resetProjects,
+      migrateToDatabase
     }}>
       {children}
     </ProjectContext.Provider>

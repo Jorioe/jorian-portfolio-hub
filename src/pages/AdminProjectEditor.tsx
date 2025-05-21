@@ -28,6 +28,7 @@ import { Trash2, Plus, Save, GripVertical } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { ImageUploader } from '@/components/ImageUploader';
 import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 // Extend het ToastVariant type
 type ToastVariant = 'default' | 'destructive' | 'warning';
@@ -359,31 +360,56 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
       // Verwijder de activeSkillTab want die hoort niet bij de projectdata
       delete (projectToSave as any).activeSkillTab;
       
+      // Zorg ervoor dat arrays correct zijn voor de database
+      if (!Array.isArray(projectToSave.categories)) {
+        projectToSave.categories = projectToSave.categories ? [projectToSave.categories] : [];
+      }
+      
+      if (!Array.isArray(projectToSave.technologies)) {
+        projectToSave.technologies = projectToSave.technologies ? [projectToSave.technologies] : [];
+      }
+      
+      if (!Array.isArray(projectToSave.skills)) {
+        projectToSave.skills = projectToSave.skills ? [projectToSave.skills] : [];
+      }
+      
       if (isNewProject) {
-        // Genereer een nieuw ID in de vorm van een string
-        const highestId = projects.reduce((max, p) => {
-          const idNum = parseInt(p.id);
-          return isNaN(idNum) ? max : Math.max(max, idNum);
-        }, 0);
-        
-        projectToSave.id = (highestId + 1).toString();
-        
-        // Zorg ervoor dat er minimaal één content-blok is
-        if (!projectToSave.content || projectToSave.content.length === 0) {
-          projectToSave.content = [{ type: 'text', content: 'Projectinhoud...' }];
-        }
-        
-        // Converteer naar het juiste formaat
-        const projectForStorage = convertAdminProjectToProject(projectToSave);
-        
-        // Gebruik de addProject functie uit de context
-        addProject(projectForStorage);
-        
-        console.log('Nieuw project opgeslagen:', projectForStorage);
-        
-        toast({
-          title: 'Project toegevoegd',
-          description: `Het project "${projectToSave.title}" is succesvol toegevoegd.`,
+        // Genereer een nieuw UUID voor het project
+        // We gebruiken nu een UUID in string format zodat het compatibel is met de database
+        import('uuid').then(({ v4: uuidv4 }) => {
+          projectToSave.id = uuidv4();
+          console.log('Nieuw project ID gegenereerd:', projectToSave.id);
+          
+          // Zorg ervoor dat er minimaal één content-blok is
+          if (!projectToSave.content || projectToSave.content.length === 0) {
+            projectToSave.content = [{ type: 'text', content: 'Projectinhoud...' }];
+          }
+          
+          // Converteer naar het juiste formaat
+          const projectForStorage = convertAdminProjectToProject(projectToSave);
+          
+          console.log('Project dat wordt opgeslagen:', projectForStorage);
+          
+          // Gebruik de addProject functie uit de context
+          addProject(projectForStorage);
+          
+          toast({
+            title: 'Project toegevoegd',
+            description: `Het project "${projectToSave.title}" is succesvol toegevoegd.`,
+          });
+          
+          // Navigeer terug naar het dashboard
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1000);
+        }).catch(error => {
+          console.error('Fout bij genereren van UUID:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Fout bij opslaan',
+            description: 'Kon geen uniek ID genereren voor het project.'
+          });
+          setIsLoading(false);
         });
       } else {
         // Update een bestaand project
@@ -393,21 +419,21 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
         // Converteer naar het juiste formaat
         const projectForStorage = convertAdminProjectToProject(projectToSave);
         
+        console.log('Project dat wordt bijgewerkt:', projectForStorage);
+        
         // Gebruik de updateProject functie uit de context
         updateProject(projectForStorage);
-        
-        console.log('Project bijgewerkt:', projectForStorage);
         
         toast({
           title: 'Project bijgewerkt',
           description: `Het project "${projectToSave.title}" is succesvol bijgewerkt.`,
         });
+        
+        // Navigeer terug naar het dashboard
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
       }
-      
-      // Navigeer terug naar het dashboard
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1000);
     } catch (error) {
       console.error('Fout bij opslaan:', error);
       toast({
@@ -416,7 +442,10 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
         description: 'Er is een fout opgetreden bij het opslaan van het project. Controleer de console voor details.'
       });
     } finally {
-      setIsLoading(false);
+      if (!isNewProject) {
+        // Voor nieuwe projecten wordt setIsLoading(false) gedaan na de asynchrone uuid import
+        setIsLoading(false);
+      }
     }
   };
 
@@ -1012,10 +1041,64 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
 // Hulpfunctie om een AdminProject om te zetten naar een Project
 const convertAdminProjectToProject = (adminProject: AdminProject): Project => {
   // Maak een kopie zonder de activeSkillTab
-  const { activeSkillTab, ...projectWithoutTab } = adminProject;
+  const { activeSkillTab, ...projectData } = adminProject;
   
-  // Cast de content naar het juiste type
-  // Dit is een vereenvoudiging - in een echte implementatie zou je mogelijk 
-  // extra validatie moeten toepassen op de content types
-  return projectWithoutTab as unknown as Project;
+  // Zorg ervoor dat alle arrays correct zijn
+  const formattedProject = {
+    ...projectData,
+    // Zorg ervoor dat categories een array is
+    categories: Array.isArray(projectData.categories) 
+      ? projectData.categories 
+      : projectData.categories ? [projectData.categories] : [],
+    
+    // Zorg ervoor dat technologies een array is als het bestaat
+    technologies: projectData.technologies && Array.isArray(projectData.technologies)
+      ? projectData.technologies
+      : projectData.technologies ? [projectData.technologies] : [],
+      
+    // Zorg ervoor dat skills een array is als het bestaat
+    skills: projectData.skills && Array.isArray(projectData.skills)
+      ? projectData.skills
+      : projectData.skills ? [projectData.skills] : [],
+      
+    // Zorg ervoor dat content items het juiste formaat hebben
+    content: projectData.content.map(item => {
+      // Per content type kunnen we bepalen welke velden we meenemen
+      const commonFields = {
+        type: item.type,
+      };
+      
+      // Voeg content toe als het bestaat
+      if (item.content !== undefined) {
+        (commonFields as any).content = item.content;
+      }
+      
+      // Voeg optionele velden toe als ze bestaan
+      if (item.content2 !== undefined) {
+        (commonFields as any).content2 = item.content2;
+      }
+      
+      if (item.image !== undefined) {
+        (commonFields as any).image = item.image;
+      }
+      
+      if (item.imgtext !== undefined) {
+        (commonFields as any).imgtext = item.imgtext;
+      }
+      
+      if (item.imgtext2 !== undefined) {
+        (commonFields as any).imgtext2 = item.imgtext2;
+      }
+      
+      if (item.aditionalContent !== undefined) {
+        (commonFields as any).aditionalContent = item.aditionalContent;
+      }
+      
+      return commonFields;
+    })
+  };
+  
+  console.log('Geformatteerd project voor opslag:', formattedProject);
+  
+  return formattedProject as Project;
 }; 

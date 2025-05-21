@@ -35,9 +35,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Copy, MoreVertical, Trash2, Image, Upload, X, Eye, Download } from "lucide-react";
+import { ArrowLeft, Copy, MoreVertical, Trash2, Image, Upload, X, Eye, Download, Database } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { v4 as uuidv4 } from 'uuid';
+import { mediaService } from "@/lib/database";
 
 // Interface voor media items
 interface MediaItem {
@@ -49,9 +50,6 @@ interface MediaItem {
   uploadDate: string;
 }
 
-// Lokale opslag key
-const STORAGE_KEY = 'portfolio_media_library';
-
 export default function MediaLibrary() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -61,30 +59,34 @@ export default function MediaLibrary() {
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMigrating, setIsMigrating] = useState(false);
 
   // Laad media items bij initialisatie
   useEffect(() => {
-    const loadMediaItems = () => {
-      try {
-        const storedItems = localStorage.getItem(STORAGE_KEY);
-        if (storedItems) {
-          setMediaItems(JSON.parse(storedItems));
-        }
-      } catch (error) {
-        console.error('Error loading media items:', error);
-        setMediaItems([]);
-      }
-    };
-
     loadMediaItems();
   }, []);
 
-  // Helper om media items op te slaan
-  const saveMediaItems = (items: MediaItem[]) => {
+  // Haal media items op van Supabase
+  const loadMediaItems = async () => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      const { data, error } = await mediaService.getMediaItems();
+      
+      if (error) {
+        console.error('Error loading media items:', error);
+        toast({
+          title: "Fout bij laden media",
+          description: "Er was een probleem bij het ophalen van mediabestanden.",
+          variant: "destructive"
+        });
+        setMediaItems([]);
+      } else if (data) {
+        setMediaItems(data);
+      } else {
+        setMediaItems([]);
+      }
     } catch (error) {
-      console.error('Error saving media items:', error);
+      console.error('Error loading media items:', error);
+      setMediaItems([]);
     }
   };
 
@@ -105,44 +107,36 @@ export default function MediaLibrary() {
     setIsUploading(true);
     
     // Maak een array om alle beloftes te verzamelen
-    const uploadPromises = files.map(file => {
-      return new Promise<MediaItem>((resolve, reject) => {
-        const reader = new FileReader();
-        
-        reader.onload = () => {
-          const mediaItem: MediaItem = {
-            id: uuidv4(),
-            name: file.name,
-            url: reader.result as string,
-            type: file.type,
-            size: file.size,
-            uploadDate: new Date().toISOString()
-          };
-          
-          resolve(mediaItem);
-        };
-        
-        reader.onerror = () => {
-          reject(new Error(`Failed to read file: ${file.name}`));
-        };
-        
-        reader.readAsDataURL(file);
-      });
-    });
+    const uploadPromises = files.map(file => mediaService.uploadFile(file));
     
     try {
       // Wacht tot alle uploads zijn voltooid
-      const newMediaItems = await Promise.all(uploadPromises);
+      const results = await Promise.all(uploadPromises);
       
-      // Voeg de nieuwe items toe aan de bestaande lijst
-      const updatedMediaItems = [...mediaItems, ...newMediaItems];
-      setMediaItems(updatedMediaItems);
-      saveMediaItems(updatedMediaItems);
+      // Filter succesvolle uploads
+      const successfulUploads = results.filter(result => !result.error && result.data);
+      const failedUploads = results.filter(result => result.error);
       
-      toast({
-        title: "Upload voltooid",
-        description: `${files.length} bestand(en) succesvol geüpload.`
-      });
+      // Voeg de nieuwe items toe aan de state
+      const newMediaItems = successfulUploads.map(result => result.data);
+      if (newMediaItems.length > 0) {
+        setMediaItems(prev => [...prev, ...newMediaItems]);
+      }
+      
+      if (successfulUploads.length > 0) {
+        toast({
+          title: "Upload voltooid",
+          description: `${successfulUploads.length} bestand(en) succesvol geüpload.`
+        });
+      }
+      
+      if (failedUploads.length > 0) {
+        toast({
+          title: "Upload gedeeltelijk mislukt",
+          description: `${failedUploads.length} bestand(en) konden niet worden geüpload.`,
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Error uploading files:', error);
       toast({
@@ -155,17 +149,40 @@ export default function MediaLibrary() {
     }
   };
 
-  // Functie om een mediabestand te verwijderen
-  const handleDeleteItem = (id: string) => {
-    const updatedItems = mediaItems.filter(item => item.id !== id);
-    setMediaItems(updatedItems);
-    saveMediaItems(updatedItems);
-    setItemToDelete(null);
-    
-    toast({
-      title: "Media verwijderd",
-      description: "Het mediabestand is succesvol verwijderd."
-    });
+  // Functie om mediabestand te verwijderen
+  const handleDeleteItem = async (item: MediaItem) => {
+    try {
+      // Haal de bestandsnaam uit de URL (als het geen data URL is)
+      const filename = item.url.split('/').pop() || '';
+      
+      const { error } = await mediaService.deleteFile(filename);
+      
+      if (error) {
+        console.error('Error deleting file:', error);
+        toast({
+          title: "Verwijderen mislukt",
+          description: "Er is iets misgegaan bij het verwijderen van het bestand.",
+          variant: "destructive"
+        });
+      } else {
+        // Verwijder het item uit de lokale state
+        setMediaItems(mediaItems.filter(mediaItem => mediaItem.id !== item.id));
+        
+        toast({
+          title: "Media verwijderd",
+          description: "Het mediabestand is succesvol verwijderd."
+        });
+      }
+    } catch (error) {
+      console.error('Error in handleDeleteItem:', error);
+      toast({
+        title: "Verwijderen mislukt",
+        description: "Er is iets misgegaan bij het verwijderen van het bestand.",
+        variant: "destructive"
+      });
+    } finally {
+      setItemToDelete(null);
+    }
   };
 
   // Functie om een link naar het clipboard te kopiëren
@@ -204,6 +221,39 @@ export default function MediaLibrary() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Functie om lokale afbeeldingen te migreren naar Supabase
+  const handleMigrateToSupabase = async () => {
+    setIsMigrating(true);
+    try {
+      const { success, error } = await mediaService.migrateMediaFromLocalStorage();
+      
+      if (error) {
+        console.error('Error migrating media to Supabase:', error);
+        toast({
+          title: "Migratie gedeeltelijk mislukt",
+          description: "Niet alle mediabestanden konden worden gemigreerd naar Supabase.",
+          variant: "destructive"
+        });
+      } else if (success) {
+        toast({
+          title: "Migratie voltooid",
+          description: "Mediabestanden zijn succesvol gemigreerd naar Supabase."
+        });
+        // Herlaad de mediabibliotheek om de nieuwe bestanden te tonen
+        await loadMediaItems();
+      }
+    } catch (error) {
+      console.error('Error in handleMigrateToSupabase:', error);
+      toast({
+        title: "Migratie mislukt",
+        description: "Er is iets misgegaan bij het migreren van de mediabestanden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsMigrating(false);
+    }
   };
 
   // Gefilterde items op basis van zoekterm
@@ -264,37 +314,56 @@ export default function MediaLibrary() {
     setIsUploading(true);
     
     try {
-      // Voor elke afbeelding, maak een nieuw media item
-      const newMediaItems = await Promise.all(newImages.map(async (imagePath) => {
-        // Haal de bestandsnaam uit het pad
-        const fileName = imagePath.split('/').pop() || 'unknown';
-        
-        // Bepaal het type op basis van de extensie
-        const extension = fileName.split('.').pop()?.toLowerCase();
-        let mimeType = 'image/png'; // standaard
-        if (extension === 'jpg' || extension === 'jpeg') mimeType = 'image/jpeg';
-        else if (extension === 'gif') mimeType = 'image/gif';
-        else if (extension === 'webp') mimeType = 'image/webp';
-        
-        return {
-          id: uuidv4(),
-          name: fileName,
-          url: imagePath,
-          type: mimeType,
-          size: 0, // Grootte kan niet bepaald worden voor statische bestanden
-          uploadDate: new Date().toISOString()
-        };
-      }));
-      
-      // Voeg de nieuwe items toe aan de bestaande lijst
-      const updatedMediaItems = [...mediaItems, ...newMediaItems];
-      setMediaItems(updatedMediaItems);
-      saveMediaItems(updatedMediaItems);
-      
-      toast({
-        title: "Import voltooid",
-        description: `${newMediaItems.length} statische afbeelding(en) succesvol geïmporteerd.`
+      // Voor elke nieuwe afbeelding, haal deze op en upload naar Supabase
+      const uploadPromises = newImages.map(async (imagePath) => {
+        try {
+          // Haal het bestand op met fetch
+          const response = await fetch(imagePath);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${imagePath}: ${response.status} ${response.statusText}`);
+          }
+          
+          // Converteer naar blob
+          const blob = await response.blob();
+          
+          // Haal de bestandsnaam uit het pad
+          const fileName = imagePath.split('/').pop() || 'unknown';
+          
+          // Maak een File object om te uploaden
+          const file = new File([blob], fileName, { type: blob.type });
+          
+          // Upload naar Supabase
+          return mediaService.uploadFile(file);
+        } catch (error) {
+          console.error(`Error processing image ${imagePath}:`, error);
+          return { data: null, error };
+        }
       });
+      
+      // Wacht tot alle uploads zijn voltooid
+      const results = await Promise.all(uploadPromises);
+      
+      // Filter succesvolle uploads
+      const successfulUploads = results.filter(result => !result.error && result.data);
+      const failedUploads = results.filter(result => result.error);
+      
+      if (successfulUploads.length > 0) {
+        // Herlaad de complete mediabibliotheek
+        await loadMediaItems();
+        
+        toast({
+          title: "Import voltooid",
+          description: `${successfulUploads.length} statische afbeelding(en) succesvol geïmporteerd.`
+        });
+      }
+      
+      if (failedUploads.length > 0) {
+        toast({
+          title: "Import gedeeltelijk mislukt",
+          description: `${failedUploads.length} afbeelding(en) konden niet worden geïmporteerd.`,
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Error importing static images:', error);
       toast({
@@ -322,14 +391,26 @@ export default function MediaLibrary() {
             <h1 className="text-3xl font-bold">Media Bibliotheek</h1>
           </div>
           
-          <Button
-            onClick={handleImportStaticImages}
-            disabled={isUploading}
-            className="flex items-center gap-2"
-          >
-            <Upload size={16} />
-            Importeer statische afbeeldingen
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleMigrateToSupabase}
+              disabled={isUploading || isMigrating}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Database size={16} />
+              Migreer naar Supabase
+            </Button>
+            
+            <Button
+              onClick={handleImportStaticImages}
+              disabled={isUploading || isMigrating}
+              className="flex items-center gap-2"
+            >
+              <Upload size={16} />
+              Importeer statische afbeeldingen
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="all">
@@ -608,7 +689,12 @@ export default function MediaLibrary() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuleren</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => itemToDelete && handleDeleteItem(itemToDelete)}
+              onClick={() => {
+                const item = mediaItems.find(item => item.id === itemToDelete);
+                if (item) {
+                  handleDeleteItem(item);
+                }
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Verwijderen

@@ -44,13 +44,14 @@ import { CategoryType } from '@/data/projects';
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
-  const { projects, deleteProject, resetProjects } = useProjects();
+  const { projects, deleteProject, resetProjects, migrateToDatabase } = useProjects();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportedCode, setExportedCode] = useState("");
+  const [showMigrateConfirm, setShowMigrateConfirm] = useState(false);
 
   const getCategoryLabel = (category: CategoryType): string => {
     const categoryMap: Record<CategoryType, string> = {
@@ -273,6 +274,96 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
     setShowExportModal(true);
   };
 
+  const handleMigrateToDatabase = async () => {
+    setShowMigrateConfirm(false);
+    await migrateToDatabase();
+  };
+
+  // Voeg deze sectie toe voor de migratie bevestiging modal
+  const MigrateConfirmDialog = () => (
+    <AlertDialog open={showMigrateConfirm} onOpenChange={setShowMigrateConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            Migreren naar Database
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Je staat op het punt om alle projecten van localStorage naar de Supabase database te migreren.
+            Dit is een eenmalige operatie om de overgang te maken van lokale opslag naar de database.
+            <br /><br />
+            <strong>Bestaande projecten in de database worden overschreven.</strong>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuleren</AlertDialogCancel>
+          <AlertDialogAction onClick={handleMigrateToDatabase}>
+            Migreren
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  // Fix functie-namen voor modals
+  const DeleteConfirmModal = () => (
+    <AlertDialog open={!!projectToDelete} onOpenChange={() => setProjectToDelete(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Weet je het zeker?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Deze actie kan niet ongedaan worden gemaakt. Het project wordt permanent verwijderd.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuleren</AlertDialogCancel>
+          <AlertDialogAction onClick={() => projectToDelete && handleDeleteProject(projectToDelete)}>
+            Verwijderen
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  const ResetConfirmDialog = () => (
+    <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Weet je het zeker?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Deze actie kan niet ongedaan worden gemaakt. Alle projecten worden gereset naar de initiële data uit projects.ts.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuleren</AlertDialogCancel>
+          <AlertDialogAction onClick={handleResetProjects}>
+            Resetten
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  const ExportModal = () => (
+    <AlertDialog open={showExportModal} onOpenChange={setShowExportModal}>
+      <AlertDialogContent className="max-w-4xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Projects.ts Code</AlertDialogTitle>
+          <AlertDialogDescription>
+            Kopieer deze code en plak het in src/data/projects.ts om de wijzigingen permanent op te slaan.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="h-96 overflow-auto bg-slate-100 p-4 rounded">
+          <pre className="text-xs whitespace-pre-wrap break-all">
+            {exportedCode}
+          </pre>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Sluiten</AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col gap-8">
@@ -293,7 +384,7 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
                 </CardDescription>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+                {/* <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
                   <AlertDialogTrigger asChild>
                     <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
                       Projecten Resetten
@@ -311,16 +402,19 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
                       <AlertDialogAction onClick={handleResetProjects}>Doorgaan met resetten</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
-                </AlertDialog>
-                <Button onClick={handleExportAsCode} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
-                  Exporteer als Code
+                </AlertDialog> */}
+                <Button onClick={() => setShowMigrateConfirm(true)} variant="outline" className="flex items-center gap-2 w-full sm:w-auto bg-blue-100 hover:bg-blue-200">
+                  Migreer naar Database
                 </Button>
+                {/* <Button onClick={handleExportAsCode} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                  Exporteer als Code
+                </Button> */}
                 <Button onClick={handleShowExportModal} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
                   Toon Code
                 </Button>
-                <Button onClick={showExportInstructions} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                {/* <Button onClick={showExportInstructions} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
                   Uitleg
-                </Button>
+                </Button> */}
                 <Button onClick={handleReloadPage} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
                   Pagina Herladen
                 </Button>
@@ -855,47 +949,12 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
       </div>
 
       {/* Export Code Modal */}
-      {showExportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-background p-6 rounded-lg shadow-lg w-11/12 max-w-4xl max-h-[90vh] flex flex-col">
-            <h2 className="text-xl font-bold mb-4">Geëxporteerde Code</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Kopieer deze code en vervang de inhoud van src/data/projects.ts om je wijzigingen permanent op te slaan.
-            </p>
-            <div className="relative flex-grow overflow-auto">
-              <pre className="p-4 bg-muted text-sm rounded-md overflow-auto max-h-[60vh]">
-                {exportedCode}
-              </pre>
-            </div>
-            <div className="flex justify-end gap-4 mt-4">
-              <Button 
-                onClick={() => {
-                  try {
-                    navigator.clipboard.writeText(exportedCode);
-                    toast({
-                      title: "Gekopieerd naar klembord",
-                      description: "De code is gekopieerd naar je klembord."
-                    });
-                  } catch (e) {
-                    console.error("Kon niet naar klembord kopiëren:", e);
-                    toast({
-                      title: "Kopiëren mislukt",
-                      description: "Selecteer de code handmatig en kopieer met Ctrl+C",
-                      variant: "destructive"
-                    });
-                  }
-                }}
-                variant="outline"
-              >
-                Kopiëren
-              </Button>
-              <Button onClick={() => setShowExportModal(false)}>
-                Sluiten
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {ExportModal()}
+
+      {/* Modals */}
+      {DeleteConfirmModal()}
+      {ResetConfirmDialog()}
+      {MigrateConfirmDialog()}
     </div>
   );
 } 

@@ -6,9 +6,7 @@ import { toast } from 'sonner';
 import { ImagePlus, Upload, X, Link as LinkIcon, Eye } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { MediaSelector } from './MediaSelector';
-
-// Lokale opslag key voor de media bibliotheek
-const MEDIA_STORAGE_KEY = 'portfolio_media_library';
+import { mediaService } from '@/lib/database';
 
 interface ImageUploaderProps {
   defaultValue?: string;
@@ -45,14 +43,18 @@ const preloadImage = (src: string): Promise<boolean> => {
 };
 
 // Laad alle mediabibliotheek afbeeldingen vooraf in de cache
-const preloadMediaLibraryImages = () => {
-    try {
-    const mediaItems = JSON.parse(localStorage.getItem(MEDIA_STORAGE_KEY) || '[]');
-    mediaItems.forEach((item: any) => {
-      if (item.url && item.type && item.type.startsWith('image/')) {
-        preloadImage(item.url);
-      }
-    });
+const preloadMediaLibraryImages = async () => {
+  try {
+    // Probeer afbeeldingen op te halen van Supabase
+    const { data: mediaItems } = await mediaService.getMediaItems();
+    
+    if (mediaItems && mediaItems.length > 0) {
+      mediaItems.forEach((item: any) => {
+        if (item.url && item.type && item.type.startsWith('image/')) {
+          preloadImage(item.url);
+        }
+      });
+    }
   } catch (error) {
     console.error('Error preloading media library images:', error);
   }
@@ -87,45 +89,34 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
     }
   }, [defaultValue]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
+    
+    try {
+      // Upload het bestand naar Supabase via de mediaService
+      const { data: mediaItem, error } = await mediaService.uploadFile(file);
       
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      setImageUrl(result);
-      onImageUploaded(result);
-      
-      // Voeg toe aan media bibliotheek
-      try {
-        const mediaItems = JSON.parse(localStorage.getItem(MEDIA_STORAGE_KEY) || '[]');
-        const newMediaItem = {
-          id: uuidv4(),
-          name: file.name,
-          url: result,
-          type: file.type,
-          size: file.size,
-          uploadDate: new Date().toISOString()
-        };
-        
-        mediaItems.push(newMediaItem);
-        localStorage.setItem(MEDIA_STORAGE_KEY, JSON.stringify(mediaItems));
-      } catch (error) {
-        console.error('Error adding to media library:', error);
+      if (error) {
+        toast.error('Er is een fout opgetreden bij het uploaden.');
+        console.error('Upload error:', error);
+        setIsUploading(false);
+        return;
       }
       
-      setIsUploading(false);
-    };
-
-    reader.onerror = () => {
+      if (mediaItem) {
+        setImageUrl(mediaItem.url);
+        onImageUploaded(mediaItem.url);
+        toast.success('Bestand succesvol geüpload');
+      }
+    } catch (error) {
+      console.error('Error in handleFileUpload:', error);
       toast.error('Er is een fout opgetreden bij het uploaden.');
+    } finally {
       setIsUploading(false);
-    };
-
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleUrlSubmit = () => {
@@ -264,7 +255,7 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
                 <span className="sr-only">Verwijderen</span>
               </Button>
             </div>
-              </div>
+          </div>
           
           {showPreview && (
             <div className="relative w-full h-40 bg-muted rounded-md overflow-hidden">

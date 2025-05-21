@@ -10,9 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Image } from "lucide-react";
-
-// Lokale opslag key voor de media bibliotheek
-const MEDIA_STORAGE_KEY = 'portfolio_media_library';
+import { mediaService } from "@/lib/database";
 
 // Type voor media items
 interface MediaItem {
@@ -42,14 +40,17 @@ export function MediaSelector({ open, onOpenChange, onSelect }: MediaSelectorPro
     }
   }, [open]);
 
-  // Haal media items op uit localStorage
-  const loadMediaItems = () => {
+  // Haal media items op uit Supabase
+  const loadMediaItems = async () => {
     setIsLoading(true);
     try {
-      const storedItems = localStorage.getItem(MEDIA_STORAGE_KEY);
-      if (storedItems) {
-        const items = JSON.parse(storedItems);
-        setMediaItems(items);
+      const { data, error } = await mediaService.getMediaItems();
+      
+      if (error) {
+        console.error('Error loading media items:', error);
+        setMediaItems([]);
+      } else if (data) {
+        setMediaItems(data);
       } else {
         setMediaItems([]);
       }
