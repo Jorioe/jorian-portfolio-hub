@@ -33,6 +33,59 @@ Deze handleiding legt uit hoe je de Supabase database kunt instellen voor projec
      | created_at | timestamp with time zone | `now()` | ❌ | ✓ |
 6. Klik op "Save" om de tabel aan te maken
 
+## 1.2 Home Content Tabel Aanmaken
+
+Maak een tabel aan voor de inhoud van de homepagina:
+
+1. Klik op "New Table" in de Table Editor
+2. Vul de volgende gegevens in:
+   - **Name**: `home_content`
+   - **Enable Row Level Security (RLS)**: Aangevinkt
+   - **Columns**:
+     | Name | Type | Default Value | Primary | Nullable |
+     |------|------|--------------|---------|----------|
+     | id | uuid | `uuid_generate_v4()` | ✓ | ❌ |
+     | heroTitle | text | - | ❌ | ✓ |
+     | heroSubtitle | text | - | ❌ | ✓ |
+     | heroImage | text | - | ❌ | ✓ |
+     | aboutTitle | text | - | ❌ | ✓ |
+     | aboutText1 | text | - | ❌ | ✓ |
+     | aboutText2 | text | - | ❌ | ✓ |
+     | aboutText3 | text | - | ❌ | ✓ |
+     | aboutImage | text | - | ❌ | ✓ |
+     | ctaTitle | text | - | ❌ | ✓ |
+     | ctaText | text | - | ❌ | ✓ |
+     | featuredProjects | text | - | ❌ | ✓ |
+     | featuredProjectsTitle | text | - | ❌ | ✓ |
+     | featuredProjectsSubtitle | text | - | ❌ | ✓ |
+     | skillsTitle | text | - | ❌ | ✓ |
+     | skillsItems | text | - | ❌ | ✓ |
+     | footerLinks | text | - | ❌ | ✓ |
+     | created_at | timestamp with time zone | `now()` | ❌ | ✓ |
+     | updated_at | timestamp with time zone | `now()` | ❌ | ✓ |
+3. Klik op "Save" om de tabel aan te maken
+
+## 1.3 Contact Messages Tabel Aanmaken
+
+Maak een tabel aan voor contactberichten:
+
+1. Klik op "New Table" in de Table Editor
+2. Vul de volgende gegevens in:
+   - **Name**: `contact_messages`
+   - **Enable Row Level Security (RLS)**: Aangevinkt
+   - **Columns**:
+     | Name | Type | Default Value | Primary | Nullable |
+     |------|------|--------------|---------|----------|
+     | id | uuid | `uuid_generate_v4()` | ✓ | ❌ |
+     | name | text | - | ❌ | ❌ |
+     | email | text | - | ❌ | ❌ |
+     | subject | text | - | ❌ | ❌ |
+     | message | text | - | ❌ | ❌ |
+     | date | text | - | ❌ | ❌ |
+     | isRead | boolean | `false` | ❌ | ❌ |
+     | created_at | timestamp with time zone | `now()` | ❌ | ✓ |
+3. Klik op "Save" om de tabel aan te maken
+
 ## 2. Storage Bucket Aanmaken voor Media
 
 1. Ga naar "Storage" in het linkermenu van je Supabase Dashboard
@@ -67,6 +120,49 @@ Om te zorgen dat alleen geauthenticeerde admins projecten kunnen wijzigen:
 5. **Check operations**: `INSERT`, `UPDATE`, `DELETE`
 
 > Let op: De expressie gaat ervan uit dat je gebruikerstabel een kolom `is_admin` heeft. Als je dit niet hebt, zul je een andere RLS policy moeten bedenken of een administratorrol toevoegen aan je gebruikers.
+
+## 3.1 RLS Policies voor Home Content
+
+Stel de volgende policies in voor de `home_content` tabel:
+
+### Voor leesrechten (voor iedereen)
+1. Kies "Create a policy from scratch"
+2. **Policy name**: `Allow public read`
+3. **Target roles**: `authenticated`, `anon`
+4. **Using expression**: `true`
+5. **Check operation**: `SELECT`
+
+### Voor schrijfrechten (alleen admins)
+1. Kies "Create a policy from scratch"
+2. **Policy name**: `Allow admin write`
+3. **Target roles**: `authenticated` 
+4. **Using expression**: `(SELECT is_admin FROM auth.users WHERE auth.users.id = auth.uid())`
+5. **Check operations**: `INSERT`, `UPDATE`, `DELETE`
+
+## 3.2 RLS Policies voor Contact Messages
+
+Stel de volgende policies in voor de `contact_messages` tabel:
+
+### Voor leesrechten (alleen admins)
+1. Kies "Create a policy from scratch"
+2. **Policy name**: `Allow admin read`
+3. **Target roles**: `authenticated`
+4. **Using expression**: `(SELECT is_admin FROM auth.users WHERE auth.users.id = auth.uid())`
+5. **Check operation**: `SELECT`
+
+### Voor schrijfrechten (publiek, alleen invoegen)
+1. Kies "Create a policy from scratch"
+2. **Policy name**: `Allow public insert` 
+3. **Target roles**: `authenticated`, `anon`
+4. **Using expression**: `true`
+5. **Check operation**: `INSERT`
+
+### Voor schrijfrechten (alleen admins, update en delete)
+1. Kies "Create a policy from scratch"
+2. **Policy name**: `Allow admin update delete`
+3. **Target roles**: `authenticated`
+4. **Using expression**: `(SELECT is_admin FROM auth.users WHERE auth.users.id = auth.uid())`
+5. **Check operations**: `UPDATE`, `DELETE`
 
 ## 4. Storage Policies Instellen
 
@@ -109,7 +205,52 @@ Om toegang tot de media-bestanden te regelen:
 
 4. Ga naar de Media Bibliotheek en klik op "Migreer naar Supabase" om je media te migreren van localStorage naar Supabase Storage
 
-## Problemen Oplossen
+5. Ga naar de Homepagina Editor en klik op "Migreer naar Database" om de homepagina content te migreren naar Supabase
+
+6. Ga naar de Contactberichten pagina en klik op "Migreer naar Database" om de contactberichten te migreren naar Supabase
+
+## 6. Migratie van localStorage naar Database
+
+De applicatie ondersteunt een geleidelijke migratie van localStorage naar de Supabase database. Voor elke type data is er een aparte migratiefunctie:
+
+### 6.1 Projecten Migreren
+
+1. Ga naar het Admin Dashboard
+2. Klik op de "Migreer naar Database" knop
+3. Dit zal alle projecten uit localStorage overzetten naar de `projects` tabel in Supabase
+4. Na succesvolle migratie wordt de lokale opslag voor projecten gewist
+
+### 6.2 Homepagina Content Migreren
+
+1. Ga naar de Homepagina Editor via het Admin Dashboard
+2. Klik op de "Migreer naar Database" knop
+3. Dit zal de homepagina content uit localStorage overzetten naar de `home_content` tabel in Supabase
+4. Na succesvolle migratie wordt de lokale opslag voor homepagina content gewist
+
+### 6.3 Contactberichten Migreren
+
+1. Ga naar de Contactberichten pagina via het Admin Dashboard
+2. Klik op de "Migreer naar Database" knop
+3. Dit zal alle contactberichten uit localStorage overzetten naar de `contact_messages` tabel in Supabase
+4. Na succesvolle migratie wordt de lokale opslag voor contactberichten gewist
+
+### 6.4 Media Bibliotheek Migreren
+
+1. Ga naar de Media Bibliotheek via het Admin Dashboard
+2. Klik op de "Migreer naar Supabase" knop (indien beschikbaar)
+3. Dit zal alle media bestanden uit localStorage overzetten naar de Supabase Storage bucket
+4. Na succesvolle migratie wordt de lokale opslag voor media items gewist
+
+### Fallback mechanisme
+
+De applicatie bevat een fallback mechanisme dat automatisch localStorage gebruikt wanneer:
+- De database niet bereikbaar is
+- Er een fout optreedt bij het benaderen van de database
+- De gebruiker geen internetverbinding heeft
+
+Dit zorgt ervoor dat de applicatie blijft functioneren, zelfs als er problemen zijn met de database verbinding.
+
+## 7. Problemen Oplossen
 
 ### Project types voldoen niet aan het schema
 Als je projectstructuur niet exact overeenkomt met wat in de database is gedefinieerd, pas dan het schema aan of update je projectobjecten voordat je ze opslaat.

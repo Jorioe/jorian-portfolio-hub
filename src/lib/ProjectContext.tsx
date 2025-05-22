@@ -13,6 +13,7 @@ interface ProjectContextType {
   deleteProject: (id: string) => void;
   resetProjects: () => void;
   migrateToDatabase: () => Promise<void>; // Nieuwe functie voor migratie
+  reloadProjects: () => Promise<void>; // Nieuwe functie om projecten opnieuw te laden
 }
 
 // Creëer de context met een default waarde
@@ -25,6 +26,7 @@ const ProjectContext = createContext<ProjectContextType>({
   deleteProject: () => {},
   resetProjects: () => {},
   migrateToDatabase: async () => {},
+  reloadProjects: async () => {}, // Default waarde
 });
 
 // Hook om de context te gebruiken
@@ -314,17 +316,38 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  // Declareer en exporteer de reload functie
+  const reloadProjects = async () => {
+    try {
+      await loadProjectsFromDatabase();
+      toast({
+        title: 'Projecten herladen',
+        description: 'Projecten zijn opnieuw geladen uit de database.',
+      });
+    } catch (error) {
+      console.error('Error reloading projects:', error);
+      toast({
+        title: 'Fout bij herladen',
+        description: 'Kon projecten niet opnieuw laden.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
-    <ProjectContext.Provider value={{ 
-      projects, 
-      loading, 
-      updateProjects, 
-      addProject,
-      updateProject,
-      deleteProject,
-      resetProjects,
-      migrateToDatabase
-    }}>
+    <ProjectContext.Provider
+      value={{
+        projects,
+        loading,
+        updateProjects,
+        addProject,
+        updateProject,
+        deleteProject,
+        resetProjects,
+        migrateToDatabase,
+        reloadProjects, // Voeg de nieuwe functie toe
+      }}
+    >
       {children}
     </ProjectContext.Provider>
   );

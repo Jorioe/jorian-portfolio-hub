@@ -38,6 +38,25 @@ export default function ProjectDetail() {
     }
   }, [loading, project]);
 
+  // Extra check voor project content format
+  useEffect(() => {
+    if (project && project.content && !Array.isArray(project.content)) {
+      console.warn("Project content is not an array:", project.content);
+      try {
+        if (typeof project.content === 'string') {
+          const parsedContent = JSON.parse(project.content);
+          if (Array.isArray(parsedContent)) {
+            // We can't directly modify the project from the context, 
+            // so we reload the page to get the fixed data from our updated getProjects function
+            window.location.reload();
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing project content:", error);
+      }
+    }
+  }, [project]);
+
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;

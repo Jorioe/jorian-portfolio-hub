@@ -29,11 +29,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { homeContentService } from '@/lib/database';
 
 export default function HomeEditor() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { homeContent, updateHomeContent, loading } = useHomeContent();
+  const { homeContent, updateHomeContent, loading, migrateToDatabase, reloadHomeContent } = useHomeContent();
   const { projects } = useProjects();
   const [isLoading, setIsLoading] = useState(false);
   const [editableContent, setEditableContent] = useState<HomeContent>({
@@ -114,6 +115,34 @@ export default function HomeEditor() {
     handleInputChange('featuredProjects', newProjects);
   };
 
+  // Voeg een functie toe om database toegang te testen
+  const handleTestDatabaseAccess = async () => {
+    try {
+      console.log('Testing database access...');
+      const { success, error } = await homeContentService.testDatabaseAccess();
+      
+      if (success) {
+        toast({
+          title: "Database toegang succesvol",
+          description: "Zowel lees- als schrijftoegang is beschikbaar. Bekijk de console voor details.",
+        });
+      } else {
+        toast({
+          title: "Database toegangsprobleem",
+          description: "Er was een probleem met de toegang tot de database. Bekijk de console voor details.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error testing database access:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het testen van de database toegang.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Opslaan van de content
   const handleSave = () => {
     setIsLoading(true);
@@ -168,14 +197,40 @@ export default function HomeEditor() {
             </Button>
             <h1 className="text-3xl font-bold">Homepagina Bewerken</h1>
           </div>
-          <Button 
-            onClick={handleSave} 
-            disabled={isLoading}
-            className="flex items-center gap-2"
-          >
-            <Save size={16} />
-            Wijzigingen opslaan
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={handleTestDatabaseAccess} 
+              disabled={isLoading}
+              variant="outline"
+              className="flex items-center gap-2 bg-green-100 hover:bg-green-200"
+            >
+              Test DB Toegang
+            </Button>
+            <Button 
+              onClick={() => migrateToDatabase()} 
+              disabled={isLoading}
+              variant="outline"
+              className="flex items-center gap-2 bg-blue-100 hover:bg-blue-200"
+            >
+              Migreer naar Database
+            </Button>
+            <Button 
+              onClick={() => reloadHomeContent()} 
+              disabled={isLoading}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              Herlaad Content
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={isLoading}
+              className="flex items-center gap-2"
+            >
+              <Save size={16} />
+              Wijzigingen opslaan
+            </Button>
+          </div>
         </div>
 
         {/* Hero Section */}

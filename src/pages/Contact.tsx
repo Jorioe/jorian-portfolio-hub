@@ -91,10 +91,9 @@ export default function Contact() {
         // Probeer als backup via een mailto link
         try {
           const recipientEmail = "jorian.bracke@example.com"; // Vervang met je echte email
-          const subject = `Website Contact: ${data.subject}`;
+          const subject = `${data.subject}`;
           const body = `
 Naam: ${data.name}
-Email: ${data.email}
 
 Bericht:
 ${data.message}

@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { homeContentService } from './database';
+import { useToast } from '@/components/ui/use-toast';
 
 // Interface voor de home content
 export interface HomeContent {
@@ -32,6 +34,8 @@ interface HomeContextType {
   homeContent: HomeContent;
   updateHomeContent: (content: Partial<HomeContent>) => void;
   loading: boolean;
+  migrateToDatabase: () => Promise<void>; // Nieuwe functie voor migratie
+  reloadHomeContent: () => Promise<void>; // Nieuwe functie om content opnieuw te laden
 }
 
 // Lokale opslag key
@@ -70,7 +74,9 @@ const defaultHomeContent: HomeContent = {
 const HomeContext = createContext<HomeContextType>({
   homeContent: defaultHomeContent,
   updateHomeContent: () => {},
-  loading: true
+  loading: true,
+  migrateToDatabase: async () => {}, // Default waarde
+  reloadHomeContent: async () => {}   // Default waarde
 });
 
 // Hook om de context te gebruiken
@@ -80,67 +86,209 @@ export const useHomeContent = () => useContext(HomeContext);
 export const HomeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [homeContent, setHomeContent] = useState<HomeContent>(defaultHomeContent);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   // Laad content bij initialisatie
   useEffect(() => {
-    const loadHomeContent = () => {
-      try {
-        const storedContent = localStorage.getItem(STORAGE_KEY);
-        console.log('HomeContext: Raw stored content from localStorage:', storedContent);
-        
-        if (storedContent) {
-          const parsedContent = JSON.parse(storedContent);
-          console.log('HomeContext: Parsed content:', parsedContent);
-          console.log('HomeContext: Original featuredProjects from storage:', parsedContent.featuredProjects);
-          
-          // Zorg ervoor dat featuredProjects altijd een array is
-          if (!parsedContent.featuredProjects) {
-            parsedContent.featuredProjects = [];
-          }
-          
-          // Zorg ervoor dat alle arrays en objecten correct worden samengevoegd
-          const mergedContent = {
-            ...defaultHomeContent,
-            ...parsedContent,
-            // Handmatig arrays samenvoegen voor specifieke velden
-            skillsItems: Array.isArray(parsedContent.skillsItems) && parsedContent.skillsItems.length 
-              ? parsedContent.skillsItems 
-              : defaultHomeContent.skillsItems,
-            footerLinks: Array.isArray(parsedContent.footerLinks) && parsedContent.footerLinks.length 
-              ? parsedContent.footerLinks 
-              : defaultHomeContent.footerLinks,
-            featuredProjects: Array.isArray(parsedContent.featuredProjects) && parsedContent.featuredProjects.length 
-              ? parsedContent.featuredProjects 
-              : defaultHomeContent.featuredProjects
-          };
-          
-          console.log('HomeContext: Final merged featuredProjects:', mergedContent.featuredProjects);
-          setHomeContent(mergedContent);
-        } else {
-          console.log('HomeContext: No stored content found, using defaults');
-          setHomeContent(defaultHomeContent);
-        }
-      } catch (error) {
-        console.error('Error loading home content:', error);
-        setHomeContent(defaultHomeContent);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadHomeContent();
+    loadHomeContentFromDatabase();
   }, []);
 
+  // Functie om home content uit database te laden
+  const loadHomeContentFromDatabase = async () => {
+    setLoading(true);
+    try {
+      console.log('Loading home content from database...');
+      const { data, error } = await homeContentService.getHomeContent();
+      
+      if (error) {
+        console.error('Error loading home content from database:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        
+        // Fallback naar localStorage
+        loadFromLocalStorage();
+      } else if (data) {
+        console.log('Home content loaded from database:', data);
+        
+        // Zorg dat alle vereiste velden aanwezig zijn door te mergen met default values
+        const mergedContent = {
+          ...defaultHomeContent,
+          ...data,
+          // Handmatig arrays samenvoegen voor specifieke velden
+          skillsItems: Array.isArray(data.skillsItems) && data.skillsItems.length 
+            ? data.skillsItems 
+            : defaultHomeContent.skillsItems,
+          footerLinks: Array.isArray(data.footerLinks) && data.footerLinks.length 
+            ? data.footerLinks 
+            : defaultHomeContent.footerLinks,
+          featuredProjects: Array.isArray(data.featuredProjects) && data.featuredProjects.length 
+            ? data.featuredProjects 
+            : defaultHomeContent.featuredProjects
+        };
+        
+        setHomeContent(mergedContent);
+      } else {
+        console.log('No home content in database, loading from localStorage');
+        loadFromLocalStorage();
+      }
+    } catch (error) {
+      console.error('Failed to load home content from database:', error);
+      
+      // Fallback naar localStorage
+      loadFromLocalStorage();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Functie om home content uit localStorage te laden als fallback
+  const loadFromLocalStorage = () => {
+    try {
+      const storedContent = localStorage.getItem(STORAGE_KEY);
+      console.log('HomeContext: Raw stored content from localStorage:', storedContent);
+      
+      if (storedContent) {
+        const parsedContent = JSON.parse(storedContent);
+        console.log('HomeContext: Parsed content:', parsedContent);
+        
+        // Zorg ervoor dat featuredProjects altijd een array is
+        if (!parsedContent.featuredProjects) {
+          parsedContent.featuredProjects = [];
+        }
+        
+        // Zorg ervoor dat alle arrays en objecten correct worden samengevoegd
+        const mergedContent = {
+          ...defaultHomeContent,
+          ...parsedContent,
+          // Handmatig arrays samenvoegen voor specifieke velden
+          skillsItems: Array.isArray(parsedContent.skillsItems) && parsedContent.skillsItems.length 
+            ? parsedContent.skillsItems 
+            : defaultHomeContent.skillsItems,
+          footerLinks: Array.isArray(parsedContent.footerLinks) && parsedContent.footerLinks.length 
+            ? parsedContent.footerLinks 
+            : defaultHomeContent.footerLinks,
+          featuredProjects: Array.isArray(parsedContent.featuredProjects) && parsedContent.featuredProjects.length 
+            ? parsedContent.featuredProjects 
+            : defaultHomeContent.featuredProjects
+        };
+        
+        setHomeContent(mergedContent);
+      } else {
+        console.log('HomeContext: No stored content found, using defaults');
+        setHomeContent(defaultHomeContent);
+      }
+    } catch (error) {
+      console.error('Error loading home content from localStorage:', error);
+      setHomeContent(defaultHomeContent);
+    }
+  };
+
   // Update de home content
-  const updateHomeContent = (content: Partial<HomeContent>) => {
-    const updatedContent = { ...homeContent, ...content };
-    setHomeContent(updatedContent);
+  const updateHomeContent = async (content: Partial<HomeContent>) => {
+    setLoading(true);
     
     try {
-      console.log('Saving featuredProjects:', updatedContent.featuredProjects);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedContent));
+      const updatedContent = { ...homeContent, ...content };
+      setHomeContent(updatedContent);
+      
+      // Eerst updaten in de database
+      const { error } = await homeContentService.updateHomeContent(updatedContent);
+      
+      if (error) {
+        console.error('Error updating home content in database:', error);
+        toast({
+          title: 'Fout bij opslaan',
+          description: 'Kon homepagina content niet opslaan in de database. Opgeslagen in localStorage als fallback.',
+          variant: 'destructive',
+        });
+        
+        // Fallback naar localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedContent));
+      } else {
+        console.log('Home content updated in database');
+        toast({
+          title: 'Content opgeslagen',
+          description: 'De homepagina content is succesvol opgeslagen.',
+        });
+      }
     } catch (error) {
       console.error('Error saving home content:', error);
+      
+      // Fallback naar localStorage
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...homeContent, ...content }));
+        toast({
+          title: 'Opgeslagen in lokale opslag',
+          description: 'De content kon niet worden opgeslagen in de database maar is wel bewaard in lokale opslag.',
+          variant: 'destructive',
+        });
+      } catch (localStorageError) {
+        console.error('Error saving to localStorage:', localStorageError);
+        toast({
+          title: 'Fout bij opslaan',
+          description: 'Kon de content niet opslaan. Probeer het later opnieuw.',
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Functie voor migratie van localStorage naar database
+  const migrateToDatabase = async () => {
+    setLoading(true);
+    
+    try {
+      console.log('Migrating home content from localStorage to database');
+      const { success, error } = await homeContentService.migrateFromLocalStorage();
+      
+      if (!success) {
+        console.error('Error migrating home content to database:', error);
+        toast({
+          title: 'Fout bij migratie',
+          description: 'Kon homepagina content niet migreren naar de database.',
+          variant: 'destructive',
+        });
+      } else {
+        console.log('Home content successfully migrated to database');
+        toast({
+          title: 'Migratie voltooid',
+          description: 'De homepagina content is succesvol gemigreerd naar de database.',
+        });
+        
+        // Herlaad de content uit de database
+        await loadHomeContentFromDatabase();
+        
+        // Verwijder lokale opslag na succesvolle migratie
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch (error) {
+      console.error('Failed to migrate home content to database:', error);
+      toast({
+        title: 'Fout bij migratie',
+        description: 'Er is een onverwachte fout opgetreden bij de migratie.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Functie om home content opnieuw te laden
+  const reloadHomeContent = async () => {
+    try {
+      await loadHomeContentFromDatabase();
+      toast({
+        title: 'Content herladen',
+        description: 'De homepagina content is opnieuw geladen uit de database.',
+      });
+    } catch (error) {
+      console.error('Error reloading home content:', error);
+      toast({
+        title: 'Fout bij herladen',
+        description: 'Kon de homepagina content niet opnieuw laden.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -148,7 +296,9 @@ export const HomeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <HomeContext.Provider value={{ 
       homeContent, 
       updateHomeContent,
-      loading
+      loading,
+      migrateToDatabase,
+      reloadHomeContent
     }}>
       {children}
     </HomeContext.Provider>

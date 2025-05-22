@@ -864,7 +864,7 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="text-xl">Snelle Projectaanmaak</CardTitle>
             <CardDescription>
@@ -945,7 +945,7 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
               </Card>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Export Code Modal */}

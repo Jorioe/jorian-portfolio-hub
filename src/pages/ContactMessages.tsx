@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContactMessages, ContactMessage } from "@/lib/ContactContext";
 import { Button } from "@/components/ui/button";
@@ -50,12 +50,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, Mail, Trash2, MoreVertical, Eye, Check } from "lucide-react";
 
 export default function ContactMessages() {
-  const { messages, markAsRead, deleteMessage } = useContactMessages();
+  const { messages, markAsRead, deleteMessage, migrateToDatabase, reloadMessages } = useContactMessages();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
+
+  // Laad berichten bij eerste render
+  useEffect(() => {
+    reloadMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sorteer berichten op datum, nieuwste eerst
   const sortedMessages = [...messages].sort((a, b) => {
@@ -95,7 +101,7 @@ export default function ContactMessages() {
   };
 
   // Functie om bericht te verkorten voor de tabel
-  const truncateMessage = (message: string, maxLength = 50) => {
+  const truncateMessage = (message: string, maxLength = 30) => {
     if (message.length <= maxLength) return message;
     return message.substring(0, maxLength) + '...';
   };
@@ -113,6 +119,22 @@ export default function ContactMessages() {
               <ArrowLeft size={16} />
             </Button>
             <h1 className="text-3xl font-bold">Contactberichten</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={() => migrateToDatabase()} 
+              variant="outline"
+              className="flex items-center gap-2 bg-blue-100 hover:bg-blue-200"
+            >
+              Migreer naar Database
+            </Button>
+            <Button 
+              onClick={() => reloadMessages()} 
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              Herlaad Berichten
+            </Button>
           </div>
         </div>
 
@@ -145,7 +167,11 @@ export default function ContactMessages() {
                     </TableRow>
                   ) : (
                     sortedMessages.map((message) => (
-                      <TableRow key={message.id} className={message.isRead ? "" : "bg-secondary/20"}>
+                      <TableRow 
+                        key={message.id} 
+                        className={`${message.isRead ? "" : "bg-secondary/20"} cursor-pointer hover:bg-secondary/30`}
+                        onClick={() => handleViewMessage(message)}
+                      >
                         <TableCell>{formatDate(message.date)}</TableCell>
                         <TableCell className="font-medium">
                           {message.name}
@@ -154,7 +180,9 @@ export default function ContactMessages() {
                           </div>
                         </TableCell>
                         <TableCell>{message.subject}</TableCell>
-                        <TableCell>{truncateMessage(message.message)}</TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {truncateMessage(message.message)}
+                        </TableCell>
                         <TableCell>
                           {message.isRead ? (
                             <Badge variant="outline" className="text-muted-foreground">Gelezen</Badge>
@@ -162,7 +190,7 @@ export default function ContactMessages() {
                             <Badge>Nieuw</Badge>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon">
@@ -218,7 +246,7 @@ export default function ContactMessages() {
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
-            <DialogTitle>{selectedMessage?.subject}</DialogTitle>
+            <DialogTitle className="text-xl">{selectedMessage?.subject}</DialogTitle>
             <DialogDescription>
               Van: {selectedMessage?.name} ({selectedMessage?.email})
               <br />
@@ -227,22 +255,33 @@ export default function ContactMessages() {
           </DialogHeader>
 
           <div className="mt-4 space-y-4">
-            <div className="rounded-md bg-secondary/20 p-4 whitespace-pre-wrap">
+            <div className="rounded-md bg-secondary/20 p-4 whitespace-pre-wrap max-h-[300px] overflow-y-auto">
               {selectedMessage?.message}
             </div>
           </div>
 
           <DialogFooter className="flex items-center justify-between sm:justify-between">
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (selectedMessage) {
-                  window.location.href = `mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject}`;
-                }
-              }}
-            >
-              <Mail size={16} className="mr-2" /> Beantwoorden
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (selectedMessage) {
+                    window.location.href = `mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject}`;
+                  }
+                }}
+              >
+                <Mail size={16} className="mr-2" /> Beantwoorden
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setShowViewDialog(false);
+                  setShowDeleteDialog(true);
+                }}
+              >
+                <Trash2 size={16} className="mr-2" /> Verwijderen
+              </Button>
+            </div>
             <DialogClose asChild>
               <Button type="button">Sluiten</Button>
             </DialogClose>
