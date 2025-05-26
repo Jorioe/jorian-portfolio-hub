@@ -232,8 +232,10 @@ export default function ProjectDetail() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
             {[item.content, item.content2].map((src, i) => (
               <div key={i} className="flex flex-col items-center">
-                {i === 0 ? item.imgtext : item.imgtext2 ? (
-                  <p className="mb-2 font-semibold text-center">{i === 0 ? item.imgtext : item.imgtext2}</p>
+                {i === 0 && item.imgtext ? (
+                  <p className="mb-2 font-semibold text-center">{item.imgtext}</p>
+                ) : i === 1 && item.imgtext2 ? (
+                  <p className="mb-2 font-semibold text-center">{item.imgtext2}</p>
                 ) : null}
                 <div className="w-full">
                   <img

@@ -1078,6 +1078,19 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                       />
                                     </div>
                                   )}
+                                  
+                                  {/* Tweede afbeeldingsbeschrijving voor image blok met twee afbeeldingen */}
+                                  {(block.type === 'image' && block.content2) && (
+                                    <div className="mt-2">
+                                      <Label htmlFor={`imgtext2-${index}`}>Tweede afbeeldingbeschrijving</Label>
+                                      <Input 
+                                        id={`imgtext2-${index}`} 
+                                        value={block.imgtext2 || ''} 
+                                        onChange={(e) => handleContentChange(index, 'imgtext2', e.target.value)}
+                                        placeholder="Beschrijving voor de tweede afbeelding"
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                                 
                                 <div className="flex flex-col ml-2 gap-2">
