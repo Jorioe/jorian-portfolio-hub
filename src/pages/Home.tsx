@@ -11,28 +11,24 @@ export default function Home() {
   const { homeContent, loading: homeLoading } = useHomeContent();
   
   // Debug logs voor het laden van featured projects
-  console.log('Home component - Project IDs:', projects.map(p => p.id));
-  console.log('Home component - homeContent.featuredProjects:', homeContent.featuredProjects);
+  // console.log('Home component - Project IDs:', projects.map(p => p.id));
+  // console.log('Home component - homeContent.featuredProjects:', homeContent.featuredProjects);
   
-  // Gebruik de uitgelichte projecten uit de homeContent
+  // Gebruik de uitgelichte projecten uit de homeContent, maar filter verborgen projecten eruit
   const featuredProjects = homeContent.featuredProjects && homeContent.featuredProjects.length > 0
     ? homeContent.featuredProjects
         .map(projectId => projects.find(project => project.id === projectId))
-        .filter((project): project is typeof projects[0] => project !== undefined)
+        .filter((project): project is typeof projects[0] => project !== undefined && !project.hidden)
     : (() => {
-        console.log('Geen uitgelichte projecten gevonden, valt terug op eerste 3 projecten');
-        return projects.slice(0, 3);
-      })(); // Fallback naar de eerste 3 projecten als er geen uitgelichte zijn
+        // console.log('Geen uitgelichte projecten gevonden, valt terug op eerste 3 zichtbare projecten');
+        return projects.filter(project => !project.hidden).slice(0, 3);
+      })(); // Fallback naar de eerste 3 zichtbare projecten als er geen uitgelichte zijn
   
-  console.log('Home component - Resulterende featuredProjects:', featuredProjects.map(p => p.title));
+  // console.log('Home component - Resulterende featuredProjects:', featuredProjects.map(p => p.title));
 
-  const skills = [
-    { category: "development" as const, items: ["JavaScript", "TypeScript", "React", "HTML/CSS"] },
-    { category: "design" as const, items: ["UI/UX Design", "Figma", "Adobe XD", "Responsive Design"] },
-    { category: "research" as const, items: ["User Research", "Market Analysis", "Data Collection", "Academic Writing"] },
-    { category: "data" as const, items: ["Data Analysis", "Data Visualization", "SQL", "Excel/Google Sheets"] },
-  ];
-
+  // Gebruik vaardigheden uit homeContent in plaats van hardcoded waarden
+  const skills = homeContent.skillsItems || [];
+  
   return (
     <div className="animate-fade-in">
       {/* Hero Section */}
@@ -44,6 +40,18 @@ export default function Home() {
                 <span>Hallo, ik ben </span>
                 <span className="text-primary">Jorian Bracke</span>
               </h1>
+              
+              {/* Mobiele versie van de afbeelding tussen titel en subtitel */}
+              <div className="md:hidden mb-6">
+                <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden max-w-xs mx-auto">
+                  <img 
+                    src={homeContent.heroImage || "img/pfpic.png"} 
+                    alt="Jorian Bracke" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+              
               <p className="text-xl md:text-2xl mb-10">
                 {homeContent.heroSubtitle}
               </p>
@@ -106,12 +114,12 @@ export default function Home() {
       {/* Skills Section */}
       <section className="py-16 md:py-24 bg-secondary">
         <div className="container mx-auto px-4">
-          <h2 className="section-title text-center">Mijn Vaardigheden</h2>
+          <h2 className="section-title text-center">{homeContent.skillsTitle}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {skills.map((skillGroup) => (
               <div key={skillGroup.category} className="bg-card rounded-lg p-6 shadow-sm">
                 <div className="mb-0">
-                  <CategoryBadge category={skillGroup.category} />
+                  <CategoryBadge category={skillGroup.category as CategoryType} />
                 </div>
                 <ul className="space-y-2 my-4">
                   {skillGroup.items.map((skill, index) => (

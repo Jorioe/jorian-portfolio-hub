@@ -124,11 +124,75 @@ export default function ProjectDetail() {
         </p>
       );
     }
+    if (item.type === "video") {
+      const sizeClasses = {
+        small: "w-full max-w-xs",
+        medium: "w-full max-w-md",
+        large: "w-full max-w-2xl",
+        full: "w-full",
+      };
+      const positionClasses = {
+        left: "items-start",
+        right: "items-end",
+        center: "items-center",
+      };
+      const sizeClass = sizeClasses[item.imageSize as ImageSizeType] || sizeClasses.medium;
+      const positionClass = positionClasses[item.imagePosition as ImagePositionType] || positionClasses.center;
+      
+      // YouTube video ondersteuning
+      if (item.content.includes('youtube.com') || item.content.includes('youtu.be')) {
+        // Haal de video ID uit de URL
+        let videoId = '';
+        if (item.content.includes('youtube.com/watch?v=')) {
+          videoId = item.content.split('v=')[1].split('&')[0];
+        } else if (item.content.includes('youtu.be/')) {
+          videoId = item.content.split('youtu.be/')[1].split('?')[0];
+        }
+        
+        return (
+          <div key={index} className={`flex flex-col ${positionClass} w-full my-6`}>
+            {item.imgtext && (
+              <div className={`${sizeClass} mb-2`}>
+                <p className="font-semibold text-center">{item.imgtext}</p>
+              </div>
+            )}
+            <div className={`${sizeClass} aspect-video`}>
+              <iframe
+                src={`https://www.youtube.com/embed/${videoId}`}
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full rounded"
+              ></iframe>
+            </div>
+          </div>
+        );
+      }
+      
+      // Direct video bestand
+      return (
+        <div key={index} className={`flex flex-col ${positionClass} w-full my-6`}>
+          {item.imgtext && (
+            <div className={`${sizeClass} mb-2`}>
+              <p className="font-semibold text-center">{item.imgtext}</p>
+            </div>
+          )}
+          <div className={`${sizeClass}`}>
+            <video 
+              src={item.content}
+              controls
+              className="w-full h-auto rounded"
+            ></video>
+          </div>
+        </div>
+      );
+    }
     if (item.type === "image") {
       const sizeClasses = {
         small: "w-full max-w-xs",
         medium: "w-full max-w-md",
-        large: "w-full max-w-lg",
+        large: "w-full max-w-2xl",
         full: "w-full",
       };
       const positionClasses = {
@@ -192,7 +256,7 @@ export default function ProjectDetail() {
       const sizeClasses = {
         small: "w-full sm:w-1/4",
         medium: "w-full sm:w-1/3",
-        large: "w-full sm:w-1/2",
+        large: "w-full sm:w-2/3",
         full: "w-full",
       };
       const sizeClass = sizeClasses[item.imageSize as ImageSizeType] || sizeClasses.medium;
@@ -248,6 +312,80 @@ export default function ProjectDetail() {
         </div>
       );
     }
+    
+    if (item.type === "flex-text-video") {
+      const sizeClasses = {
+        small: "w-full sm:w-1/4",
+        medium: "w-full sm:w-1/3",
+        large: "w-full sm:w-2/3",
+        full: "w-full",
+      };
+      const sizeClass = sizeClasses[item.imageSize as ImageSizeType] || sizeClasses.medium;
+
+      // YouTube video ondersteuning
+      const isYouTube = item.content2 && (item.content2.includes('youtube.com') || item.content2.includes('youtu.be'));
+      let videoElement;
+      
+      if (isYouTube) {
+        // Haal de video ID uit de URL
+        let videoId = '';
+        if (item.content2.includes('youtube.com/watch?v=')) {
+          videoId = item.content2.split('v=')[1].split('&')[0];
+        } else if (item.content2.includes('youtu.be/')) {
+          videoId = item.content2.split('youtu.be/')[1].split('?')[0];
+        }
+        
+        videoElement = (
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}`}
+            title="YouTube video player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full h-full rounded aspect-video"
+          ></iframe>
+        );
+      } else {
+        videoElement = (
+          <video 
+            src={item.content2}
+            controls
+            className="w-full h-auto rounded"
+          ></video>
+        );
+      }
+
+      if (!item.imagePosition || item.imagePosition === "center") {
+        return (
+          <div key={index} className="flex flex-col items-center mb-10 w-full">
+            <div className="mb-6 w-full">{item.content}</div>
+            <div className={sizeClass}>
+              {item.imgtext && <p className="font-semibold text-center mb-2">{item.imgtext}</p>}
+              {videoElement}
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div key={index} className="flex flex-col sm:flex-row mb-10 gap-6 w-full">
+          {item.imagePosition === "left" && (
+            <div className={`${sizeClass} shrink-0`}>
+              {item.imgtext && <p className="font-semibold text-center mb-2">{item.imgtext}</p>}
+              {videoElement}
+            </div>
+          )}
+          <div className="flex-1">{item.content}</div>
+          {item.imagePosition === "right" && (
+            <div className={`${sizeClass} shrink-0`}>
+              {item.imgtext && <p className="font-semibold text-center mb-2">{item.imgtext}</p>}
+              {videoElement}
+            </div>
+          )}
+        </div>
+      );
+    }
+    
     return null;
   };
 

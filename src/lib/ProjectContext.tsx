@@ -14,6 +14,7 @@ interface ProjectContextType {
   resetProjects: () => void;
   migrateToDatabase: () => Promise<void>; // Nieuwe functie voor migratie
   reloadProjects: () => Promise<void>; // Nieuwe functie om projecten opnieuw te laden
+  toggleProjectVisibility: (id: string) => Promise<void>; // Nieuwe functie om projecten te verbergen/tonen
 }
 
 // Creëer de context met een default waarde
@@ -27,6 +28,7 @@ const ProjectContext = createContext<ProjectContextType>({
   resetProjects: () => {},
   migrateToDatabase: async () => {},
   reloadProjects: async () => {}, // Default waarde
+  toggleProjectVisibility: async () => {}, // Default waarde
 });
 
 // Hook om de context te gebruiken
@@ -334,6 +336,54 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  // Functie om de zichtbaarheid van een project te schakelen
+  const toggleProjectVisibility = async (id: string) => {
+    setLoading(true);
+    try {
+      // Vind het project in de huidige lijst
+      const project = projects.find(p => p.id === id);
+      
+      if (!project) {
+        console.error('Project niet gevonden:', id);
+        toast({
+          title: 'Fout bij wijzigen zichtbaarheid',
+          description: 'Project niet gevonden.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Toggle de hidden eigenschap
+      const updatedProject = { 
+        ...project, 
+        hidden: !project.hidden 
+      };
+      
+      // Update in de database
+      const { error } = await projectsService.updateProject(updatedProject);
+      
+      if (error) {
+        console.error('Error toggling project visibility:', error);
+        toast({
+          title: 'Fout bij wijzigen zichtbaarheid',
+          description: 'Kon de zichtbaarheid van het project niet wijzigen.',
+          variant: 'destructive',
+        });
+      } else {
+        // Herlaad alle projecten om zeker te zijn van up-to-date data
+        await loadProjectsFromDatabase();
+        toast({
+          title: 'Zichtbaarheid gewijzigd',
+          description: `${project.title} is nu ${updatedProject.hidden ? 'verborgen' : 'zichtbaar'}.`,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to toggle project visibility:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <ProjectContext.Provider
       value={{
@@ -346,6 +396,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         resetProjects,
         migrateToDatabase,
         reloadProjects, // Voeg de nieuwe functie toe
+        toggleProjectVisibility, // Voeg de nieuwe functie toe
       }}
     >
       {children}

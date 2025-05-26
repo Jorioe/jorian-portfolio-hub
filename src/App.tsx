@@ -17,11 +17,13 @@ import AdminProjectEditor from "@/pages/AdminProjectEditor";
 import ContactMessages from "@/pages/ContactMessages";
 import MediaLibrary from "@/pages/MediaLibrary";
 import HomeEditor from "@/pages/HomeEditor";
+import ContactInfoEditor from "@/pages/ContactInfoEditor";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/lib/AuthContext";
 import { ProjectProvider } from "@/lib/ProjectContext";
 import { ContactProvider } from "@/lib/ContactContext";
 import { HomeProvider } from "@/lib/HomeContext";
+import { ContactInfoProvider } from "@/lib/ContactInfoContext";
 import TestPage from "@/pages/TestPage";
 import { useEffect } from "react";
 
@@ -87,8 +89,10 @@ const AppRouter = () => {
           <Route path="/dashboard/project/:id" element={<AdminProjectEditor />} />
           {/* Homepage editor route */}
           <Route path="/dashboard/home-editor" element={<HomeEditor />} />
-          {/* Contact en Media routes */}
+          {/* Contact routes */}
           <Route path="/dashboard/contact" element={<ContactMessages />} />
+          <Route path="/dashboard/contact-info" element={<ContactInfoEditor />} />
+          {/* Media routes */}
           <Route path="/dashboard/media" element={<MediaLibrary />} />
         </Route>
       </Routes>
@@ -105,9 +109,11 @@ const App = () => (
         <ProjectProvider>
           <ContactProvider>
             <HomeProvider>
-              <BrowserRouter>
-                <AppRouter />
-              </BrowserRouter>
+              <ContactInfoProvider>
+                <BrowserRouter>
+                  <AppRouter />
+                </BrowserRouter>
+              </ContactInfoProvider>
             </HomeProvider>
           </ContactProvider>
         </ProjectProvider>

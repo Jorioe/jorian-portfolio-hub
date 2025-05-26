@@ -39,12 +39,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Edit, Trash2, MoreVertical, Eye, LogOut } from 'lucide-react';
+import { Plus, Edit, Trash2, MoreVertical, Eye, EyeOff, LogOut } from 'lucide-react';
 import { CategoryType } from '@/data/projects';
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
-  const { projects, deleteProject, resetProjects, migrateToDatabase } = useProjects();
+  const { projects, deleteProject, resetProjects, migrateToDatabase, toggleProjectVisibility } = useProjects();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
@@ -451,7 +451,19 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
                             {project.categories.map((category) => (
                               <span
                                 key={category}
-                                className="text-xs px-2 py-1 rounded-full bg-muted"
+                                className="px-2 py-1 text-xs rounded-full font-medium"
+                                style={{
+                                  backgroundColor: category === 'development' ? '#e1f6ff' : 
+                                                  category === 'design' ? '#e7f7e7' : 
+                                                  category === 'research' ? '#f0e5ff' :
+                                                  category === 'data' ? '#fff4dd' :
+                                                  '#ffe5e5',
+                                  color: category === 'development' ? '#0072b1' : 
+                                        category === 'design' ? '#00813c' : 
+                                        category === 'research' ? '#5c21d8' :
+                                        category === 'data' ? '#cc8b00' :
+                                        '#d80000'
+                                }}
                               >
                                 {getCategoryLabel(category)}
                               </span>
@@ -460,78 +472,92 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
                         </TableCell>
                         <TableCell>{project.date}</TableCell>
                         <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical size={16} />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Acties</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleViewProject(project.id)}>
-                                <Eye size={16} className="mr-2" /> Bekijken
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                // Speciale route voor Snotyoung project
-                                if (project.id === "1") {
-                                  navigate(`/dashboard/project/snotyoung`);
-                                  return;
-                                } 
-                                
-                                try {
-                                  // Codeer de project ID voor het geval er speciale tekens in zitten
-                                  const encodedId = encodeURIComponent(project.id);
-                                  navigate(`/dashboard/project/${encodedId}`);
-                                } catch (error) {
-                                  console.error("Error encoding project ID:", error);
-                                  toast({
-                                    title: "Fout",
-                                    description: "Er is een fout opgetreden bij het navigeren naar het project.",
-                                    variant: "destructive"
-                                  });
-                                }
-                              }}>
-                                <Edit size={16} className="mr-2" /> Bewerken
-                              </DropdownMenuItem>
-                              <AlertDialog
-                                open={projectToDelete === project.id}
-                                onOpenChange={(open) => {
-                                  if (!open) setProjectToDelete(null);
-                                }}
-                              >
-                                <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem
-                                    onSelect={(e) => {
-                                      e.preventDefault();
-                                      setProjectToDelete(project.id);
-                                    }}
-                                    className="text-destructive"
-                                  >
-                                    <Trash2 size={16} className="mr-2" /> Verwijderen
-                                  </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Weet je het zeker?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Dit zal het project "{project.title}" permanent verwijderen.
-                                      Deze actie kan niet ongedaan worden gemaakt.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDeleteProject(project.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => toggleProjectVisibility(project.id)}
+                              title={project.hidden ? "Project zichtbaar maken" : "Project verbergen"}
+                            >
+                              {project.hidden ? (
+                                <EyeOff size={16} className="text-muted-foreground" />
+                              ) : (
+                                <Eye size={16} className="text-primary" />
+                              )}
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical size={16} />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acties</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleViewProject(project.id)}>
+                                  <Eye size={16} className="mr-2" /> Bekijken
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  // Speciale route voor Snotyoung project
+                                  if (project.id === "1") {
+                                    navigate(`/dashboard/project/snotyoung`);
+                                    return;
+                                  } 
+                                  
+                                  try {
+                                    // Codeer de project ID voor het geval er speciale tekens in zitten
+                                    const encodedId = encodeURIComponent(project.id);
+                                    navigate(`/dashboard/project/${encodedId}`);
+                                  } catch (error) {
+                                    console.error("Error encoding project ID:", error);
+                                    toast({
+                                      title: "Fout",
+                                      description: "Er is een fout opgetreden bij het navigeren naar het project.",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }}>
+                                  <Edit size={16} className="mr-2" /> Bewerken
+                                </DropdownMenuItem>
+                                <AlertDialog
+                                  open={projectToDelete === project.id}
+                                  onOpenChange={(open) => {
+                                    if (!open) setProjectToDelete(null);
+                                  }}
+                                >
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => {
+                                        e.preventDefault();
+                                        setProjectToDelete(project.id);
+                                      }}
+                                      className="text-destructive"
                                     >
-                                      Verwijderen
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                      <Trash2 size={16} className="mr-2" /> Verwijderen
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Weet je het zeker?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Dit zal het project "{project.title}" permanent verwijderen.
+                                        Deze actie kan niet ongedaan worden gemaakt.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteProject(project.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Verwijderen
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -614,6 +640,37 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
                 <CardContent className="p-4 flex flex-col items-center text-center">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-medium text-sm">Homepagina Editor</h3>
+                  <p className="text-xs text-muted-foreground mt-1 mb-3">Bewerk de content van de homepagina</p>
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/dashboard/home-editor')}>
+                    Bewerken
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-medium text-sm">Contact Info</h3>
+                  <p className="text-xs text-muted-foreground mt-1 mb-3">Bewerk contactgegevens en social links</p>
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/dashboard/contact-info')}>
+                    Bewerken
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
                       <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
                       <path d="m9 12 2 2 4-4" />
                     </svg>
@@ -628,22 +685,6 @@ export const projects: Project[] = ${JSON.stringify(projects, null, 2)
                     });
                   }}>
                     Controleren
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-background shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 mt-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-                      <path d="M12 20h9" />
-                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                    </svg>
-                  </div>
-                  <h3 className="font-medium text-sm">Homepagina Editor</h3>
-                  <p className="text-xs text-muted-foreground mt-1 mb-3">Bewerk de content van de homepagina</p>
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/dashboard/home-editor')}>
-                    Bewerken
                   </Button>
                 </CardContent>
               </Card>

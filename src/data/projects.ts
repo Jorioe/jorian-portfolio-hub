@@ -13,6 +13,9 @@ export interface Project {
       | "break"
       | "subtitle"
       | "small-subtitle"
+      | "bold-small-subtitle"
+      | "boldtexttop"
+      | "boldtext"
       | "quote-top"
       | "quote"
       | "quote-bottom"
@@ -24,16 +27,21 @@ export interface Project {
     content?: string;
     content2?: string;
     image?: string;
+    aditionalContent?: string;
+    imgtext?: string;
+    imgtext2?: string;
   }>;
   aditionalContent?: string;
   imgtext?: string;
   imgtext2?: string;
   subtitle?: string;
+  fullDescription?: string;
   technologies?: string[];
   githubLink?: string;
   instagramLink?: string;
   demoLink?: string;
   skills?: string[];
+  hidden?: boolean;
 }
 
 export const projects: Project[] = [
@@ -67,7 +75,7 @@ export const projects: Project[] = [
       { type: "text", content: "Voor onderzoek naar de conversie van Snotyoung ben ik begonnen met het bekijken van de statistieken van de website. Hierin is te zien dat Snotyoung in 90 dagen 3.656 unieke websitebezoekers heeft gehad, waarvan maar 32 bestellingen. Dat is een percentage van 0,84%, terwijl de gemiddelde conversie in de fashion branche ligt tussen de 1,61 en 2,77%." },
       { type: "image", content: "/img/SY-stat.png", content2: "/img/SY-stat-2.png"  },
       { type: "text", content:"Om de conversie van Snotyoung te verhogen ben ik allereest onderzoek gaan doen naar de gebruikerservaring van Snotyoung. Om meer te weten te komen over de gebruikerservaring van de website heb ik een enquête uitgestuurd met vragen over het uiterlijk van de website. Hieruit is het volgende gekomen: Uit de enquête bleek dat de ondervraagden vooral vonden dat de website een basic uitstraling heeft met weinig eigen stijl. Wel vonden ze de website makkelijk navigeren, maar dit omdat er niet veel opties waren om heen te gaan op de website." },
-      { type: "text", content: "Ook heb ik een plugin op de huidige website geïnstalleerd die de activiteit van bezoekers bekijkt en opneemt gedurende 2 weken. Hiermee kan ik zien welke pagina’s de bezoekers bekijken, waar ze op klikken, tot hoever ze scrollen etc. Dit is essentiële data die ik kan gebruiken bij het maken van de nieuwe website en het verbeteren van de gebruikerservaring. Het geeft bijvoorbeeld waardevolle inzichten over hoe bezoekers de website gebruiken en eventuele knelpunten en problemen op de website (bijv. onduidelijke navigatie)." },
+      { type: "text", content: "Ook heb ik een plugin op de huidige website geïnstalleerd die de activiteit van bezoekers bekijkt en opneemt gedurende 2 weken. Hiermee kan ik zien welke pagina's de bezoekers bekijken, waar ze op klikken, tot hoever ze scrollen etc. Dit is essentiële data die ik kan gebruiken bij het maken van de nieuwe website en het verbeteren van de gebruikerservaring. Het geeft bijvoorbeeld waardevolle inzichten over hoe bezoekers de website gebruiken en eventuele knelpunten en problemen op de website (bijv. onduidelijke navigatie)." },
       { type: "text", content: "Hieruit heb ik de volgende data verkregen. In de heatmaps is te zien dat maar 10% van de bezoekers de onderkant van de homepagina bereikt. Ook is te zien dat er vooral geklikt wordt op \"store\" (maar dit is de homepagina) en op \"about\". Hier is te zien dat veel bezoekers niet scrollen op de \"about\" pagina, maar weer klikken op \"store\". Als we kijken naar een samenvatting van alle verkregen data met deze plugin, is te zien dat de gemiddelde tijd op een pagina 59 seconden is, bezoekers gemiddeld maar tot 52,4% scrollen en dat 34,8% de website verlaat na 1 pagina te hebben bekeken. Wat betekent dit?" },
       { type: "opsom-text", content: "• Slechts 10% van de bezoekers bereikt de onderkant van de homepagina. Dit betekent dat de meeste bezoekers hun informatiebehoeften vervullen zonder helemaal naar beneden te scrollen of dat ze snel afhaken." },    
       { type: "opsom-text", content: "• Het feit dat \"store\" de homepagina is en veel bezoekers daarop klikken, kan erop wijzen dat ze niet doorhebben dat ze al op de homepagina/store zijn. Dit kan verwarrend zijn en leidt mogelijk tot een slechte gebruikerservaring." },    
@@ -174,7 +182,7 @@ export const projects: Project[] = [
       { type: "image", content: "/img/FW-paid-1.png", imgtext: "Marketingschema", content2: "/img/FW-paid-2.png", imgtext2: "Flyers (800 verspreid bij Shockerz en Gearbox)"},
       { type: "break", content: "" }, // Witregel toevoegen
       { type: "subtitle", content: "Aansluiting promotie-uitingen bij concept en kernwaarden" }, // Nog een subtitel
-      { type: "text", content: "Alle promotie-uitingen waren sterk verbonden met het Frostwave-concept: “Rauw in de Kou”. Dit werd weerspiegeld in:" },
+      { type: "text", content: "Alle promotie-uitingen waren sterk verbonden met het Frostwave-concept: \"Rauw in de Kou\". Dit werd weerspiegeld in:" },
       { type: "opsom-text-top", content: "• Een consistent gebruik van visuele elementen (ijsachtige graphics, neon roze en blauw) die perfect pasten bij de koude, rauwe sfeer van het evenement." },    
       { type: "opsom-text", content: "• Creatieve en verrassende content, zoals de neon-geïnspireerde visuals en pakkende Nederlandse captions die de kernwaarden (energie, vernieuwing, en humor) benadrukten." },    
       { type: "break", content: "" }, // Witregel toevoegen
@@ -195,7 +203,7 @@ export const projects: Project[] = [
       { type: "text", content: "Frostwave 2025 was een succesvol evenement dat de rauwe energie van de rawstylecommunity naar voren bracht. Er waren echter belangrijke leermomenten die moeten worden opgevolgd om de volgende editie nog sterker te maken. Door de marketingcampagne eerder op te starten, technische zaken beter af te stemmen en meer aandacht te geven aan de backstagebeleving, kan de impact en de algehele ervaring voor zowel bezoekers als artiesten verder worden verbeterd. Het is cruciaal om de geleerde lessen om te zetten in concrete acties om de groei van het evenement te waarborgen." },
       { type: "text", content: "Dit project was een geweldige kans om mijn vaardigheden in eventplanning, marketing en social media te verbeteren. Ik kijk ernaar uit om deze ervaringen toe te passen in toekomstige projecten." }
     ],
-    fullDescription: "Frostwave was een multidisciplinair project waarin ik een compleet evenement van A tot Z heb ontwikkeld, georganiseerd en gepositioneerd. Het concept draait om de herontdekking van vergeten subgenres binnen raw hardstyle in een mysterieuze winterse setting - “Rauw in de Kou”.",
+    fullDescription: "Frostwave was een multidisciplinair project waarin ik een compleet evenement van A tot Z heb ontwikkeld, georganiseerd en gepositioneerd. Het concept draait om de herontdekking van vergeten subgenres binnen raw hardstyle in een mysterieuze winterse setting - \"Rauw in de Kou\".",
     technologies: ["Adobe Photoshop & Illustrator", "Premiere Pro", "Meta Ads Manager", "Instagram", "TikTok"],
     skills: ["Photoshop", "Illustrator", "Market Research", "Data Analysis", "Event planning", "Social Media"],
     instagramLink: "https://www.instagram.com/frostwave.event/"

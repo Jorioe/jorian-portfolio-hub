@@ -54,7 +54,7 @@ const findCategoryForSkill = (skill: string): CategoryType | null => {
 };
 
 // Definieer een aangepast type voor content blokken in de admin interface
-type ContentBlockType = 'text' | 'break' | 'subtitle' | 'small-subtitle' | 'quote-top' | 'quote' | 'quote-bottom' | 'image' | 'flex-text' | 'opsom-text' | 'opsom-text-top' | 'opsom-text-bottom' | 'boldtext' | 'boldtexttop' | 'bold-small-subtitle';
+type ContentBlockType = 'text' | 'break' | 'subtitle' | 'small-subtitle' | 'quote-top' | 'quote' | 'quote-bottom' | 'image' | 'flex-text' | 'opsom-text' | 'opsom-text-top' | 'opsom-text-bottom' | 'boldtext' | 'boldtexttop' | 'bold-small-subtitle' | 'video' | 'flex-text-video';
 
 // Afbeeldingsformaatopties
 type ImageSizeType = 'small' | 'medium' | 'large' | 'full';
@@ -129,12 +129,14 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
     { label: "Citaat (boven)", value: "quote-top" },
     { label: "Citaat (onder)", value: "quote-bottom" },
     { label: "Afbeelding", value: "image" },
+    { label: "Video", value: "video" },
     { label: "Flexibele tekst", value: "flex-text" },
     { label: "Opsommingstekst", value: "opsom-text" },
     { label: "Opsommingstekst (boven)", value: "opsom-text-top" },
     { label: "Opsommingstekst (onder)", value: "opsom-text-bottom" },
     { label: "Vette tekst", value: "boldtext" },
     { label: "Vette tekst (boven)", value: "boldtexttop" },
+    { label: "Flexibele tekst met video", value: "flex-text-video" },
   ];
 
   const imageSizeOptions: { label: string; value: ImageSizeType }[] = [
@@ -513,7 +515,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
               <div className="flex-1">
                 <ImageUploader 
                   defaultValue={project.image}
-                  onImageUploaded={(url) => setProject(prev => ({ ...prev, image: url }))}
+                  onMediaUploaded={(url) => setProject(prev => ({ ...prev, image: url }))}
                 />
               </div>
               {project.image && (
@@ -839,7 +841,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                     )}
                                   </div>
                                   
-                                  {block.type !== 'break' && block.type !== 'image' && (
+                                  {(block.type !== 'break' && block.type !== 'image' && block.type !== 'video' && block.type !== 'flex-text-video') && (
                                     <div className="mt-2">
                                       <Label htmlFor={`content-text-${index}`}>{block.type === 'flex-text' ? 'Beschrijvende tekst' : 'Inhoud'}</Label>
                                       <Textarea 
@@ -849,6 +851,97 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                         rows={3}
                                       />
                                     </div>
+                                  )}
+                                  
+                                  {(block.type === 'flex-text-video') && (
+                                    <>
+                                      <div className="mt-2">
+                                        <Label htmlFor={`flex-video-text-${index}`}>Beschrijvende tekst</Label>
+                                        <Textarea 
+                                          id={`flex-video-text-${index}`} 
+                                          value={block.content} 
+                                          onChange={(e) => handleContentChange(index, 'content', e.target.value)}
+                                          rows={3}
+                                        />
+                                      </div>
+                                      
+                                      <div className="mt-2 flex gap-4">
+                                        <div className="flex-1">
+                                          <Label>Video</Label>
+                                          <ImageUploader 
+                                            defaultValue={block.content2 || ''}
+                                            onMediaUploaded={(url) => handleContentChange(index, 'content2', url)}
+                                            mediaType="video"
+                                          />
+                                        </div>
+                                        {block.content2 && (
+                                          <div className="relative w-40 h-40 rounded-md overflow-hidden">
+                                            {block.content2.includes('youtube.com') || block.content2.includes('youtu.be') ? (
+                                              <div className="bg-gray-200 w-full h-full flex items-center justify-center">
+                                                <span className="text-xs text-center p-2">YouTube Video</span>
+                                              </div>
+                                            ) : (
+                                              <video 
+                                                src={block.content2} 
+                                                className="w-full h-full object-cover"
+                                                controls={false}
+                                                muted
+                                              />
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                      
+                                      <div className="mt-2">
+                                        <Label htmlFor={`video-desc-${index}`}>Videobeschrijving</Label>
+                                        <Input 
+                                          id={`video-desc-${index}`} 
+                                          value={block.imgtext || ''} 
+                                          onChange={(e) => handleContentChange(index, 'imgtext', e.target.value)}
+                                          placeholder="Beschrijving voor de video"
+                                        />
+                                      </div>
+                                      
+                                      <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                                        <div className="w-full sm:w-1/3">
+                                          <Label htmlFor={`flexvideo-size-${index}`}>Videogrootte</Label>
+                                          <Select 
+                                            value={block.imageSize || 'medium'} 
+                                            onValueChange={(value) => handleImageSizeChange(index, value as ImageSizeType)}
+                                          >
+                                            <SelectTrigger id={`flexvideo-size-${index}`}>
+                                              <SelectValue placeholder="Selecteer grootte" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {imageSizeOptions.map(option => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                  {option.label}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        
+                                        <div className="w-full sm:w-1/3">
+                                          <Label htmlFor={`flexvideo-position-${index}`}>Videopositie</Label>
+                                          <Select 
+                                            value={block.imagePosition || 'center'} 
+                                            onValueChange={(value) => handleImagePositionChange(index, value as ImagePositionType)}
+                                          >
+                                            <SelectTrigger id={`flexvideo-position-${index}`}>
+                                              <SelectValue placeholder="Selecteer positie" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {imagePositionOptions.map(option => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                  {option.label}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      </div>
+                                    </>
                                   )}
                                   
                                   {(block.type === 'boldtext' || block.type === 'boldtexttop' || block.type === 'bold-small-subtitle') && (
@@ -864,24 +957,12 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                   )}
                                   
                                   {(block.type === 'image' || block.type === 'flex-text') && (
-                                    <div className="mt-2">
-                                      <Label htmlFor={`imgtext-${index}`}>Afbeeldingbeschrijving</Label>
-                                      <Input 
-                                        id={`imgtext-${index}`} 
-                                        value={block.imgtext || ''} 
-                                        onChange={(e) => handleContentChange(index, 'imgtext', e.target.value)}
-                                        placeholder="Beschrijving voor de afbeelding"
-                                      />
-                                    </div>
-                                  )}
-                                  
-                                  {(block.type === 'image' || block.type === 'flex-text') && (
                                     <div className="mt-2 flex gap-4">
                                       <div className="flex-1">
                                         <Label>Afbeelding</Label>
                                         <ImageUploader 
                                           defaultValue={block.content2 || block.image || block.content || ''}
-                                          onImageUploaded={(url) => {
+                                          onMediaUploaded={(url) => {
                                             if (block.type === 'flex-text') {
                                               // Voor flex-text slaan we de afbeelding op in het content2 veld
                                               handleContentChange(index, 'content2', url);
@@ -921,13 +1002,53 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                     </div>
                                   )}
                                   
+                                  {(block.type === 'video') && (
+                                    <div className="mt-2 flex gap-4">
+                                      <div className="flex-1">
+                                        <Label>Video</Label>
+                                        <ImageUploader 
+                                          defaultValue={block.content || ''}
+                                          onMediaUploaded={(url) => handleContentChange(index, 'content', url)}
+                                          mediaType="video"
+                                        />
+                                      </div>
+                                      {block.content && (
+                                        <div className="relative w-40 h-40 rounded-md overflow-hidden">
+                                          {block.content.includes('youtube.com') || block.content.includes('youtu.be') ? (
+                                            <div className="bg-gray-200 w-full h-full flex items-center justify-center">
+                                              <span className="text-xs text-center p-2">YouTube Video</span>
+                                            </div>
+                                          ) : (
+                                            <video 
+                                              src={block.content} 
+                                              className="w-full h-full object-cover"
+                                              controls={false}
+                                              muted
+                                            />
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  
+                                  {(block.type === 'video') && (
+                                    <div className="mt-2">
+                                      <Label>Videobeschrijving (optioneel)</Label>
+                                      <Input 
+                                        value={block.imgtext || ''} 
+                                        onChange={(e) => handleContentChange(index, 'imgtext', e.target.value)}
+                                        placeholder="Beschrijving voor de video"
+                                      />
+                                    </div>
+                                  )}
+                                  
                                   {(block.type === 'image') && (
                                     <div className="mt-2 flex gap-4">
                                       <div className="flex-1">
                                         <Label>Tweede afbeelding (optioneel)</Label>
                                         <ImageUploader 
                                           defaultValue={block.content2 || ''}
-                                          onImageUploaded={(url) => handleContentChange(index, 'content2', url)}
+                                          onMediaUploaded={(url) => handleContentChange(index, 'content2', url)}
                                         />
                                       </div>
                                       {block.content2 && (
@@ -943,6 +1064,18 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                           />
                                         </div>
                                       )}
+                                    </div>
+                                  )}
+                                  
+                                  {(block.type === 'image' || block.type === 'flex-text') && (
+                                    <div className="mt-2">
+                                      <Label htmlFor={`imgtext-${index}`}>Afbeeldingbeschrijving</Label>
+                                      <Input 
+                                        id={`imgtext-${index}`} 
+                                        value={block.imgtext || ''} 
+                                        onChange={(e) => handleContentChange(index, 'imgtext', e.target.value)}
+                                        placeholder="Beschrijving voor de afbeelding"
+                                      />
                                     </div>
                                   )}
                                 </div>
@@ -1092,6 +1225,15 @@ const convertAdminProjectToProject = (adminProject: AdminProject): Project => {
       
       if (item.aditionalContent !== undefined) {
         (commonFields as any).aditionalContent = item.aditionalContent;
+      }
+      
+      // Voeg de afbeeldingsgrootte en -positie attributen toe
+      if (item.imageSize !== undefined) {
+        (commonFields as any).imageSize = item.imageSize;
+      }
+      
+      if (item.imagePosition !== undefined) {
+        (commonFields as any).imagePosition = item.imagePosition;
       }
       
       return commonFields;

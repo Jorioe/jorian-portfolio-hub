@@ -59,7 +59,7 @@ export default function HomeEditor() {
   // Laad de huidige content wanneer de context is geladen
   useEffect(() => {
     if (!loading) {
-      console.log('Setting editableContent with featuredProjects:', homeContent.featuredProjects);
+      // console.log('Setting editableContent with featuredProjects:', homeContent.featuredProjects);
       setEditableContent(homeContent);
     }
   }, [homeContent, loading]);
@@ -77,17 +77,17 @@ export default function HomeEditor() {
     if (editableContent.featuredProjects.includes(projectId)) return;
     
     const updatedProjects = [...editableContent.featuredProjects, projectId];
-    console.log('Project toegevoegd:', projectId);
-    console.log('Nieuwe lijst met featured projects:', updatedProjects);
+    // console.log('Project toegevoegd:', projectId);
+    // console.log('Nieuwe lijst met featured projects:', updatedProjects);
     handleInputChange('featuredProjects', updatedProjects);
   };
 
   // Verwijder een project uit de uitgelichte projecten
   const removeFeaturedProject = (projectId: string) => {
-    console.log('Verwijderen van project:', projectId);
-    console.log('Huidige featuredProjects:', editableContent.featuredProjects);
+    // console.log('Verwijderen van project:', projectId);
+    // console.log('Huidige featuredProjects:', editableContent.featuredProjects);
     const updatedProjects = editableContent.featuredProjects.filter(id => id !== projectId);
-    console.log('Geüpdatete featuredProjects:', updatedProjects);
+    // console.log('Geüpdatete featuredProjects:', updatedProjects);
     handleInputChange('featuredProjects', updatedProjects);
   };
   
@@ -118,7 +118,7 @@ export default function HomeEditor() {
   // Voeg een functie toe om database toegang te testen
   const handleTestDatabaseAccess = async () => {
     try {
-      console.log('Testing database access...');
+      // console.log('Testing database access...');
       const { success, error } = await homeContentService.testDatabaseAccess();
       
       if (success) {
@@ -134,7 +134,7 @@ export default function HomeEditor() {
         });
       }
     } catch (error) {
-      console.error('Error testing database access:', error);
+      // console.error('Error testing database access:', error);
       toast({
         title: "Fout",
         description: "Er is een fout opgetreden bij het testen van de database toegang.",
@@ -148,8 +148,8 @@ export default function HomeEditor() {
     setIsLoading(true);
 
     try {
-      console.log('HomeEditor - Opslaan van content', editableContent);
-      console.log('HomeEditor - Featured Projects voor opslaan:', editableContent.featuredProjects);
+      // console.log('HomeEditor - Opslaan van content', editableContent);
+      // console.log('HomeEditor - Featured Projects voor opslaan:', editableContent.featuredProjects);
       
       updateHomeContent(editableContent);
       
@@ -164,7 +164,7 @@ export default function HomeEditor() {
       }, 500); // Korte timeout zodat de gebruiker de toast kan zien
       
     } catch (error) {
-      console.error('Error saving home content:', error);
+      // console.error('Error saving home content:', error);
       toast({
         title: "Fout bij opslaan",
         description: "Er is een fout opgetreden bij het opslaan van de content.",
@@ -396,7 +396,7 @@ export default function HomeEditor() {
                         .filter(project => !editableContent.featuredProjects.includes(project.id))
                         .map(project => (
                           <SelectItem key={project.id} value={project.id}>
-                            {project.title}
+                            {project.title} {project.hidden && <span className="text-red-500 ml-2">(Verborgen)</span>}
                           </SelectItem>
                         ))
                       }
@@ -415,7 +415,12 @@ export default function HomeEditor() {
                       const project = projects.find(p => p.id === projectId);
                       return (
                         <div key={projectId} className="flex items-center justify-between p-3 bg-secondary/20 rounded-md">
-                          <span>{project?.title || 'Onbekend project'}</span>
+                          <span>
+                            {project?.title || 'Onbekend project'}
+                            {project?.hidden && (
+                              <span className="text-red-500 ml-2 text-sm font-medium">(Verborgen project)</span>
+                            )}
+                          </span>
                           <div className="flex items-center gap-2">
                             <Button 
                               type="button"
@@ -503,11 +508,23 @@ export default function HomeEditor() {
                           <Label htmlFor={`skills-${categoryIndex}`}>Vaardigheden (komma-gescheiden)</Label>
                           <Textarea
                             id={`skills-${categoryIndex}`}
-                            value={category.items.join(', ')}
+                            value={category._tempValue !== undefined ? category._tempValue : category.items.join(', ')}
                             onChange={(e) => {
+                              const updatedSkills = [...editableContent.skillsItems];
+                              updatedSkills[categoryIndex] = {
+                                ...updatedSkills[categoryIndex],
+                                _tempValue: e.target.value
+                              };
+                              handleInputChange('skillsItems', updatedSkills);
+                            }}
+                            onBlur={(e) => {
                               const skillsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                               const updatedSkills = [...editableContent.skillsItems];
-                              updatedSkills[categoryIndex].items = skillsArray;
+                              updatedSkills[categoryIndex] = {
+                                category: updatedSkills[categoryIndex].category,
+                                items: skillsArray,
+                                _tempValue: undefined
+                              };
                               handleInputChange('skillsItems', updatedSkills);
                             }}
                             className="mt-1"

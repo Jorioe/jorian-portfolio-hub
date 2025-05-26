@@ -21,6 +21,7 @@ export interface HomeContent {
   skillsItems: {
     category: string;
     items: string[];
+    _tempValue?: string; // Tijdelijk veld voor het opslaan van ruwe invoer
   }[];
   footerLinks: {
     title: string;

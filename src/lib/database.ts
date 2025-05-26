@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 const PROJECTS_TABLE = 'projects';
 const HOME_CONTENT_TABLE = 'home_content';
 const CONTACT_MESSAGES_TABLE = 'contact_messages';
+const CONTACT_INFO_TABLE = 'contact_info';
 
 // Helper functie om eenvoudige ID's om te zetten naar geldige UUID's
 function convertToValidUuid(id: string): string {
@@ -18,7 +19,7 @@ function convertToValidUuid(id: string): string {
   // Als het geen geldig UUID is, genereer een nieuw UUID op basis van de huidige ID
   // We voegen een vaste prefix toe zodat dezelfde ID altijd hetzelfde UUID oplevert
   const generatedUuid = uuidv4();
-  console.log(`Converted ID '${id}' to UUID: ${generatedUuid}`);
+  // console.log(`Converted ID '${id}' to UUID: ${generatedUuid}`);
   return generatedUuid;
 }
 
@@ -27,24 +28,24 @@ export const projectsService = {
   // Haal alle projecten op
   async getProjects(): Promise<{ data: Project[] | null; error: any }> {
     try {
-      console.log('Getting projects from database');
+      // console.log('Getting projects from database');
       const { data, error } = await supabase
         .from(PROJECTS_TABLE)
         .select('*')
         .order('date', { ascending: false });
       
       if (error) {
-        console.error('Supabase error getting projects:', error);
+        // console.error('Supabase error getting projects:', error);
         return { data: null, error };
       }
       
       // Log de ruwe data voor debugging
-      console.log('Raw project data from database:', data);
+      // console.log('Raw project data from database:', data);
       
       // Verwerk de data zodat het compatible is met frontend verwachtingen
       if (data) {
         try {
-          console.log(`Processing ${data.length} projects`);
+          // console.log(`Processing ${data.length} projects`);
           
           // Zorg ervoor dat alle data in het juiste formaat is
           const processedData = data.map(projectData => {
@@ -56,7 +57,7 @@ export const projectsService = {
               try {
                 project.categories = JSON.parse(project.categories);
               } catch (error) {
-                console.error(`Error parsing categories for project ${project.id}:`, error);
+                // console.error(`Error parsing categories for project ${project.id}:`, error);
                 project.categories = [project.categories];
               }
             } else if (!Array.isArray(project.categories)) {
@@ -69,7 +70,7 @@ export const projectsService = {
                 try {
                   project.technologies = JSON.parse(project.technologies);
                 } catch (error) {
-                  console.error(`Error parsing technologies for project ${project.id}:`, error);
+                  // console.error(`Error parsing technologies for project ${project.id}:`, error);
                   project.technologies = [project.technologies];
                 }
               } else if (!Array.isArray(project.technologies)) {
@@ -83,7 +84,7 @@ export const projectsService = {
                 try {
                   project.skills = JSON.parse(project.skills);
                 } catch (error) {
-                  console.error(`Error parsing skills for project ${project.id}:`, error);
+                  // console.error(`Error parsing skills for project ${project.id}:`, error);
                   project.skills = [project.skills];
                 }
               } else if (!Array.isArray(project.skills)) {
@@ -99,18 +100,18 @@ export const projectsService = {
                   const parsedContent = JSON.parse(project.content);
                   if (Array.isArray(parsedContent)) {
                     project.content = parsedContent as Project['content'];
-                    console.log(`Successfully parsed content for project ${project.id}`);
+                    // console.log(`Successfully parsed content for project ${project.id}`);
                   } else {
-                    console.warn(`Project ${project.id} parsed content is not an array:`, parsedContent);
+                    // console.warn(`Project ${project.id} parsed content is not an array:`, parsedContent);
                     project.content = [];
                   }
                 } else {
-                  console.warn(`Project ${project.id} content is not an array or string:`, project.content);
+                  // console.warn(`Project ${project.id} content is not an array or string:`, project.content);
                   // Fallback om altijd een array te hebben
                   project.content = [];
                 }
               } catch (error) {
-                console.error(`Error parsing content for project ${project.id}:`, error);
+                // console.error(`Error parsing content for project ${project.id}:`, error);
                 // Fallback naar lege array bij parse fouten
                 project.content = [];
               }
@@ -121,14 +122,14 @@ export const projectsService = {
           
           return { data: processedData, error: null };
         } catch (error) {
-          console.error('Error processing project data:', error);
+          // console.error('Error processing project data:', error);
           return { data: null, error };
         }
       }
       
       return { data: [], error: null };
     } catch (error) {
-      console.error('Unexpected error in getProjects:', error);
+      // console.error('Unexpected error in getProjects:', error);
       return { data: null, error };
     }
   },
@@ -159,10 +160,10 @@ export const projectsService = {
         (formattedProject as any).content = JSON.stringify(formattedProject.content);
       }
       
-      console.log('Formatted project for storage:', formattedProject);
+      // console.log('Formatted project for storage:', formattedProject);
       return formattedProject;
     } catch (error) {
-      console.error('Error formatting project for storage:', error);
+      // console.error('Error formatting project for storage:', error);
       throw error;
     }
   },
@@ -188,14 +189,14 @@ export const projectsService = {
               const parsedContent = JSON.parse(data.content);
               if (Array.isArray(parsedContent)) {
                 data.content = parsedContent as Project['content'];
-                console.log(`Successfully parsed content for individual project ${id}`);
+                // console.log(`Successfully parsed content for individual project ${id}`);
               } else {
-                console.warn(`Project ${id} parsed content is not an array:`, parsedContent);
+                // console.warn(`Project ${id} parsed content is not an array:`, parsedContent);
                 data.content = [];
               }
             }
           } catch (error) {
-            console.error(`Error parsing content for individual project ${id}:`, error);
+            // console.error(`Error parsing content for individual project ${id}:`, error);
             data.content = [];
           }
         }
@@ -206,7 +207,7 @@ export const projectsService = {
       
       return { data, error };
     } catch (error) {
-      console.error('Error in getProjectById:', error);
+      // console.error('Error in getProjectById:', error);
       return { data: null, error };
     }
   },
@@ -224,7 +225,7 @@ export const projectsService = {
       
       return { data, error };
     } catch (error) {
-      console.error('Error in addProject:', error);
+      // console.error('Error in addProject:', error);
       return { data: null, error };
     }
   },
@@ -243,7 +244,7 @@ export const projectsService = {
       
       return { data, error };
     } catch (error) {
-      console.error('Error in updateProject:', error);
+      // console.error('Error in updateProject:', error);
       return { data: null, error };
     }
   },
@@ -266,18 +267,18 @@ export const projectsService = {
       const localProjects = localStorage.getItem(localStorageKey);
       
       if (!localProjects) {
-        console.log('No local projects found for migration');
+        // console.log('No local projects found for migration');
         return { success: true, error: null };
       }
       
       const projects = JSON.parse(localProjects);
       
       if (!Array.isArray(projects) || projects.length === 0) {
-        console.log('No valid projects in localStorage for migration');
+        // console.log('No valid projects in localStorage for migration');
         return { success: true, error: null };
       }
       
-      console.log(`Found ${projects.length} projects in localStorage for migration`);
+      // console.log(`Found ${projects.length} projects in localStorage for migration`);
       
       // Converteer lokaal opgeslagen projecten naar het juiste formaat voor Supabase
       const formattedProjects = projects.map(project => {
@@ -303,11 +304,11 @@ export const projectsService = {
       const newProjects = formattedProjects.filter(p => !existingIds.has(p.id));
       
       if (newProjects.length === 0) {
-        console.log('All projects already exist in database, nothing to migrate');
+        // console.log('All projects already exist in database, nothing to migrate');
         return { success: true, error: null };
       }
       
-      console.log(`Migrating ${newProjects.length} new projects to Supabase`);
+      // console.log(`Migrating ${newProjects.length} new projects to Supabase`);
       
       // Voeg nieuwe projecten toe aan Supabase
       const { error } = await supabase
@@ -315,14 +316,14 @@ export const projectsService = {
         .insert(newProjects);
       
       if (error) {
-        console.error('Error migrating projects to Supabase:', error);
+        // console.error('Error migrating projects to Supabase:', error);
         return { success: false, error };
       }
       
-      console.log('Successfully migrated projects from localStorage to Supabase');
+      // console.log('Successfully migrated projects from localStorage to Supabase');
       return { success: true, error: null };
     } catch (error) {
-      console.error('Error during project migration:', error);
+      // console.error('Error during project migration:', error);
       return { success: false, error };
     }
   },
@@ -354,23 +355,23 @@ export const projectsService = {
             .eq('id', project.id);
           
           if (updateError) {
-            console.error(`Error updating project ${project.id}:`, updateError);
+            // console.error(`Error updating project ${project.id}:`, updateError);
           }
         } catch (error) {
-          console.error(`Error correcting project ${project.id}:`, error);
+          // console.error(`Error correcting project ${project.id}:`, error);
         }
       }
       
       return { success: true, error: null };
     } catch (error) {
-      console.error('Error during data correction:', error);
+      // console.error('Error during data correction:', error);
       return { success: false, error };
     }
   },
 
   // Reset de database indien nodig met de initiële projectdata
   async repairDatabaseWithInitialData(): Promise<{ success: boolean; error: any }> {
-    console.log('Attempting to repair database with initial projects');
+    // console.log('Attempting to repair database with initial projects');
     
     try {
       // Controleer eerst of er al projecten in de database staan
@@ -380,17 +381,17 @@ export const projectsService = {
         .limit(1);
       
       if (error) {
-        console.error('Error checking existing projects:', error);
+        // console.error('Error checking existing projects:', error);
         return { success: false, error };
       }
       
       // Als er al projecten zijn, dan is reparatie niet nodig
       if (data && data.length > 0) {
-        console.log('Database already contains projects, no repair needed');
+        // console.log('Database already contains projects, no repair needed');
         return { success: true, error: null };
       }
       
-      console.log('No projects found in database, repairing with initial data');
+      // console.log('No projects found in database, repairing with initial data');
       
       // Zet de initiële projecten om naar UUID-formaat
       const transformedProjects = initialProjects.map(project => {
@@ -407,21 +408,21 @@ export const projectsService = {
         .insert(transformedProjects);
       
       if (insertError) {
-        console.error('Error inserting initial projects during repair:', insertError);
+        // console.error('Error inserting initial projects during repair:', insertError);
         return { success: false, error: insertError };
       }
       
-      console.log('Database repair successful, added initial projects');
+      // console.log('Database repair successful, added initial projects');
       return { success: true, error: null };
     } catch (error) {
-      console.error('Unexpected error during database repair:', error);
+      // console.error('Unexpected error during database repair:', error);
       return { success: false, error };
     }
   },
 
   // Reset de projecten in de database met de gegeven initiële data
   async resetWithInitialData(initialData: Project[]): Promise<{ success: boolean; error: any }> {
-    console.log('Resetting database with provided projects');
+    // console.log('Resetting database with provided projects');
     
     try {
       // Verwijder eerst alle bestaande projecten
@@ -431,13 +432,13 @@ export const projectsService = {
         .neq('id', 'dummy'); // Delete alle rijen
       
       if (deleteError) {
-        console.error('Error deleting existing projects:', deleteError);
+        // console.error('Error deleting existing projects:', deleteError);
         return { success: false, error: deleteError };
       }
       
       // Als er geen projecten zijn om toe te voegen, zijn we klaar
       if (!initialData || initialData.length === 0) {
-        console.log('No projects to add, reset completed');
+        // console.log('No projects to add, reset completed');
         return { success: true, error: null };
       }
       
@@ -458,14 +459,14 @@ export const projectsService = {
         .insert(formattedProjects);
       
       if (insertError) {
-        console.error('Error inserting projects during reset:', insertError);
+        // console.error('Error inserting projects during reset:', insertError);
         return { success: false, error: insertError };
       }
       
-      console.log('Database reset successful with', formattedProjects.length, 'projects');
+      // console.log('Database reset successful with', formattedProjects.length, 'projects');
       return { success: true, error: null };
     } catch (error) {
-      console.error('Unexpected error during database reset:', error);
+      // console.error('Unexpected error during database reset:', error);
       return { success: false, error };
     }
   }
@@ -484,7 +485,7 @@ export const mediaService = {
       const bucketExists = buckets?.some(bucket => bucket.name === STORAGE_BUCKET);
       
       if (!bucketExists) {
-        console.log(`Creating storage bucket: ${STORAGE_BUCKET}`);
+        // console.log(`Creating storage bucket: ${STORAGE_BUCKET}`);
         await supabase.storage.createBucket(STORAGE_BUCKET, {
           public: true // Ensures files are publicly accessible
         });
@@ -496,7 +497,7 @@ export const mediaService = {
         .list();
       
       if (error) {
-        console.error('Error fetching media items from Supabase:', error);
+        // console.error('Error fetching media items from Supabase:', error);
         // Fallback to localStorage
         return this.getMediaItemsFromLocalStorage();
       }
@@ -513,7 +514,7 @@ export const mediaService = {
       
       return { data: mediaItems, error: null };
     } catch (error) {
-      console.error('Unexpected error in getMediaItems:', error);
+      // console.error('Unexpected error in getMediaItems:', error);
       // Fallback to localStorage
       return this.getMediaItemsFromLocalStorage();
     }
@@ -528,7 +529,7 @@ export const mediaService = {
       }
       return { data: [], error: null };
     } catch (error) {
-      console.error('Error loading media items from localStorage:', error);
+      // console.error('Error loading media items from localStorage:', error);
       return { data: [], error };
     }
   },
@@ -549,7 +550,7 @@ export const mediaService = {
         });
       
       if (error) {
-        console.error('Error uploading file to Supabase:', error);
+        // console.error('Error uploading file to Supabase:', error);
         // Fallback to localStorage
         return this.uploadFileToLocalStorage(file);
       }
@@ -570,7 +571,7 @@ export const mediaService = {
         error: null
       };
     } catch (error) {
-      console.error('Unexpected error in uploadFile:', error);
+      // console.error('Unexpected error in uploadFile:', error);
       // Fallback to localStorage
       return this.uploadFileToLocalStorage(file);
     }
@@ -600,7 +601,7 @@ export const mediaService = {
           
           resolve({ data: newMediaItem, error: null });
         } catch (error) {
-          console.error('Error adding to media library:', error);
+          // console.error('Error adding to media library:', error);
           resolve({ data: null, error });
         }
       };
@@ -628,7 +629,7 @@ export const mediaService = {
       
       return { error };
     } catch (error) {
-      console.error('Error deleting file:', error);
+      // console.error('Error deleting file:', error);
       return { error };
     }
   },
@@ -658,13 +659,13 @@ export const mediaService = {
           // Upload naar Supabase
           await this.uploadFile(file);
         } catch (error) {
-          console.error(`Error migrating media item ${item.name}:`, error);
+          // console.error(`Error migrating media item ${item.name}:`, error);
         }
       }
       
       return { success: true, error: null };
     } catch (error) {
-      console.error('Error during media migration:', error);
+      // console.error('Error during media migration:', error);
       return { success: false, error };
     }
   },
@@ -683,6 +684,18 @@ export const mediaService = {
         return 'image/gif';
       case 'webp':
         return 'image/webp';
+      case 'mp4':
+        return 'video/mp4';
+      case 'webm':
+        return 'video/webm';
+      case 'ogg':
+        return 'video/ogg';
+      case 'mov':
+        return 'video/quicktime';
+      case 'avi':
+        return 'video/x-msvideo';
+      case 'wmv':
+        return 'video/x-ms-wmv';
       default:
         return 'application/octet-stream';
     }
@@ -700,7 +713,7 @@ export const homeContentService = {
         .single();
       
       if (error) {
-        console.error('Supabase error getting home content:', error);
+        // console.error('Supabase error getting home content:', error);
         return { data: null, error };
       }
       
@@ -712,7 +725,7 @@ export const homeContentService = {
             try {
               data.featuredProjects = JSON.parse(data.featuredProjects);
             } catch (e) {
-              console.error('Error parsing featuredProjects:', e);
+              // console.error('Error parsing featuredProjects:', e);
               data.featuredProjects = [];
             }
           }
@@ -721,7 +734,7 @@ export const homeContentService = {
             try {
               data.skillsItems = JSON.parse(data.skillsItems);
             } catch (e) {
-              console.error('Error parsing skillsItems:', e);
+              // console.error('Error parsing skillsItems:', e);
               data.skillsItems = [];
             }
           }
@@ -730,19 +743,19 @@ export const homeContentService = {
             try {
               data.footerLinks = JSON.parse(data.footerLinks);
             } catch (e) {
-              console.error('Error parsing footerLinks:', e);
+              // console.error('Error parsing footerLinks:', e);
               data.footerLinks = [];
             }
           }
         } catch (error) {
-          console.error('Error processing home content data:', error);
+          // console.error('Error processing home content data:', error);
           return { data: null, error };
         }
       }
       
       return { data, error: null };
     } catch (error) {
-      console.error('Unexpected error in getHomeContent:', error);
+      // console.error('Unexpected error in getHomeContent:', error);
       return { data: null, error };
     }
   },
@@ -750,38 +763,38 @@ export const homeContentService = {
   // Update de home content
   async updateHomeContent(content: any): Promise<{ data: any; error: any }> {
     try {
-      console.log('START updateHomeContent - Received content:', content);
+      // console.log('START updateHomeContent - Received content:', content);
       
       // Bereid de data voor voor opslag in Supabase
       const formattedContent = { ...content };
       
       // Converteer arrays naar strings voor opslag
       if (Array.isArray(formattedContent.featuredProjects)) {
-        console.log('Converting featuredProjects array to string');
+        // console.log('Converting featuredProjects array to string');
         formattedContent.featuredProjects = JSON.stringify(formattedContent.featuredProjects);
       }
       
       if (Array.isArray(formattedContent.skillsItems)) {
-        console.log('Converting skillsItems array to string');
+        // console.log('Converting skillsItems array to string');
         formattedContent.skillsItems = JSON.stringify(formattedContent.skillsItems);
       }
       
       if (Array.isArray(formattedContent.footerLinks)) {
-        console.log('Converting footerLinks array to string');
+        // console.log('Converting footerLinks array to string');
         formattedContent.footerLinks = JSON.stringify(formattedContent.footerLinks);
       }
       
-      console.log('Formatted content ready for database:', formattedContent);
+      // console.log('Formatted content ready for database:', formattedContent);
       
       // Controleer of de record al bestaat
-      console.log('Checking if home_content record already exists');
+      // console.log('Checking if home_content record already exists');
       const { data: existingData, error: checkError } = await supabase
         .from(HOME_CONTENT_TABLE)
         .select('id')
         .single();
       
       if (checkError) {
-        console.error('Error checking existing home_content:', checkError);
+        // console.error('Error checking existing home_content:', checkError);
         if (checkError.code !== 'PGRST116') { // Not found error is expected if no record exists
           return { data: null, error: checkError };
         }
@@ -791,7 +804,7 @@ export const homeContentService = {
       
       if (existingData) {
         // Update bestaande record
-        console.log('Updating existing record with ID:', existingData.id);
+        // console.log('Updating existing record with ID:', existingData.id);
         result = await supabase
           .from(HOME_CONTENT_TABLE)
           .update(formattedContent)
@@ -799,26 +812,26 @@ export const homeContentService = {
           .select();
       } else {
         // Maak nieuwe record aan
-        console.log('No existing record found, creating new record');
+        // console.log('No existing record found, creating new record');
         result = await supabase
           .from(HOME_CONTENT_TABLE)
           .insert(formattedContent)
           .select();
       }
       
-      console.log('Database operation result:', result);
+      // console.log('Database operation result:', result);
       
       if (result.error) {
-        console.error('Error in database operation:', result.error);
-        console.error('Error details:', JSON.stringify(result.error, null, 2));
+        // console.error('Error in database operation:', result.error);
+        // console.error('Error details:', JSON.stringify(result.error, null, 2));
       } else {
-        console.log('Home content successfully saved to database');
+        // console.log('Home content successfully saved to database');
       }
       
       return result;
     } catch (error) {
-      console.error('Exception in updateHomeContent:', error);
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      // console.error('Exception in updateHomeContent:', error);
+      // console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       return { data: null, error };
     }
   },
@@ -826,48 +839,48 @@ export const homeContentService = {
   // Migreer home content van localStorage naar Supabase
   async migrateFromLocalStorage(): Promise<{ success: boolean; error: any }> {
     try {
-      console.log('START migrateFromLocalStorage for home content');
+      // console.log('START migrateFromLocalStorage for home content');
       
       // Haal content op uit localStorage
       const STORAGE_KEY = 'portfolio_home_content';
       const storedContent = localStorage.getItem(STORAGE_KEY);
       
       if (!storedContent) {
-        console.log('No local home content found for migration');
+        // console.log('No local home content found for migration');
         return { success: true, error: null };
       }
       
-      console.log('Raw stored content from localStorage:', storedContent);
+      // console.log('Raw stored content from localStorage:', storedContent);
       
       try {
         const homeContent = JSON.parse(storedContent);
-        console.log('Parsed home content:', homeContent);
+        // console.log('Parsed home content:', homeContent);
         
         // Valideer de belangrijkste velden
-        console.log('Validating content structure:');
-        console.log('- featuredProjects:', Array.isArray(homeContent.featuredProjects) ? 'is array' : typeof homeContent.featuredProjects);
-        console.log('- skillsItems:', Array.isArray(homeContent.skillsItems) ? 'is array' : typeof homeContent.skillsItems);
-        console.log('- footerLinks:', Array.isArray(homeContent.footerLinks) ? 'is array' : typeof homeContent.footerLinks);
+        // console.log('Validating content structure:');
+        // console.log('- featuredProjects:', Array.isArray(homeContent.featuredProjects) ? 'is array' : typeof homeContent.featuredProjects);
+        // console.log('- skillsItems:', Array.isArray(homeContent.skillsItems) ? 'is array' : typeof homeContent.skillsItems);
+        // console.log('- footerLinks:', Array.isArray(homeContent.footerLinks) ? 'is array' : typeof homeContent.footerLinks);
         
         // Update or insert home content
-        console.log('Calling updateHomeContent...');
+        // console.log('Calling updateHomeContent...');
         const { data, error } = await this.updateHomeContent(homeContent);
         
         if (error) {
-          console.error('Error from updateHomeContent:', error);
-          console.error('Error details:', JSON.stringify(error, null, 2));
+          // console.error('Error from updateHomeContent:', error);
+          // console.error('Error details:', JSON.stringify(error, null, 2));
           return { success: false, error };
         }
         
-        console.log('Successfully migrated home content from localStorage to Supabase:', data);
+        // console.log('Successfully migrated home content from localStorage to Supabase:', data);
         return { success: true, error: null };
       } catch (parseError) {
-        console.error('Error parsing localStorage content:', parseError);
+        // console.error('Error parsing localStorage content:', parseError);
         return { success: false, error: parseError };
       }
     } catch (error) {
-      console.error('Unexpected error during home content migration:', error);
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      // console.error('Unexpected error during home content migration:', error);
+      // console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       return { success: false, error };
     }
   },
@@ -875,42 +888,40 @@ export const homeContentService = {
   // Test database toegang om te zien of de RLS-policies werken
   async testDatabaseAccess(): Promise<{ success: boolean; error: any }> {
     try {
-      console.log('Testing database access for home_content table...');
+      // console.log('Testing database access for home_content table...');
       
       // Probeer eerst een SELECT query
-      console.log('Testing SELECT access...');
+      // console.log('Testing SELECT access...');
       const { data: selectData, error: selectError } = await supabase
         .from(HOME_CONTENT_TABLE)
         .select('id')
         .limit(1);
       
       if (selectError) {
-        console.error('SELECT access test failed:', selectError);
-        console.error('Error details:', JSON.stringify(selectError, null, 2));
+        // console.error('SELECT access test failed:', selectError);
+        // console.error('Error details:', JSON.stringify(selectError, null, 2));
         return { success: false, error: selectError };
       }
       
-      console.log('SELECT access test successful:', selectData);
-      
       // Test een dummy INSERT (we voeren deze niet echt uit, maar checken alleen de query plan)
-      console.log('Testing INSERT access...');
+      // console.log('Testing INSERT access...');
       const { error: insertError } = await supabase
         .from(HOME_CONTENT_TABLE)
         .insert({ heroTitle: 'Test Title' })
         .select();
       
       if (insertError) {
-        console.error('INSERT access test failed:', insertError);
-        console.error('Error details:', JSON.stringify(insertError, null, 2));
+        // console.error('INSERT access test failed:', insertError);
+        // console.error('Error details:', JSON.stringify(insertError, null, 2));
         // We retourneren nog steeds success omdat we alleen willen testen
       } else {
-        console.log('INSERT access test successful');
+        // console.log('INSERT access test successful');
       }
       
       return { success: true, error: null };
     } catch (error) {
-      console.error('Unexpected error during database access test:', error);
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      // console.error('Unexpected error during database access test:', error);
+      // console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       return { success: false, error };
     }
   }
@@ -927,13 +938,13 @@ export const contactService = {
         .order('date', { ascending: false });
       
       if (error) {
-        console.error('Supabase error getting contact messages:', error);
+        // console.error('Supabase error getting contact messages:', error);
         return { data: [], error };
       }
       
       return { data: data || [], error: null };
     } catch (error) {
-      console.error('Unexpected error in getMessages:', error);
+      // console.error('Unexpected error in getMessages:', error);
       return { data: [], error };
     }
   },
@@ -948,7 +959,7 @@ export const contactService = {
       
       return { data, error };
     } catch (error) {
-      console.error('Error in addMessage:', error);
+      // console.error('Error in addMessage:', error);
       return { data: null, error };
     }
   },
@@ -963,7 +974,7 @@ export const contactService = {
       
       return { error };
     } catch (error) {
-      console.error('Error in markAsRead:', error);
+      // console.error('Error in markAsRead:', error);
       return { error };
     }
   },
@@ -978,7 +989,7 @@ export const contactService = {
       
       return { error };
     } catch (error) {
-      console.error('Error in deleteMessage:', error);
+      // console.error('Error in deleteMessage:', error);
       return { error };
     }
   },
@@ -986,51 +997,199 @@ export const contactService = {
   // Migreer berichten van localStorage naar Supabase
   async migrateFromLocalStorage(): Promise<{ success: boolean; error: any }> {
     try {
-      console.log('START migrateFromLocalStorage for contact messages');
+      // console.log('START migrateFromLocalStorage for contact messages');
       
       // Haal berichten op uit localStorage
       const STORAGE_KEY = 'portfolio_contact_messages';
       const storedMessages = localStorage.getItem(STORAGE_KEY);
       
       if (!storedMessages) {
-        console.log('No local contact messages found for migration');
+        // console.log('No local contact messages found for migration');
         return { success: true, error: null };
       }
       
-      console.log('Raw stored messages from localStorage:', storedMessages);
+      // console.log('Raw stored messages from localStorage:', storedMessages);
       
       try {
         const messages = JSON.parse(storedMessages);
-        console.log('Parsed messages:', messages);
+        // console.log('Parsed messages:', messages);
         
         if (!Array.isArray(messages) || messages.length === 0) {
-          console.log('No valid contact messages in localStorage for migration');
+          // console.log('No valid contact messages in localStorage for migration');
           return { success: true, error: null };
         }
         
-        console.log(`Found ${messages.length} contact messages in localStorage for migration`);
+        // console.log(`Found ${messages.length} contact messages in localStorage for migration`);
         
         // Voeg alle berichten toe aan Supabase
-        console.log('Inserting messages into database...');
+        // console.log('Inserting messages into database...');
         const { data, error } = await supabase
           .from(CONTACT_MESSAGES_TABLE)
           .insert(messages)
           .select();
         
         if (error) {
-          console.error('Error migrating contact messages to Supabase:', error);
-          console.error('Error details:', JSON.stringify(error, null, 2));
+          // console.error('Error migrating contact messages to Supabase:', error);
+          // console.error('Error details:', JSON.stringify(error, null, 2));
           return { success: false, error };
         }
         
-        console.log('Successfully migrated contact messages from localStorage to Supabase:', data);
+        // console.log('Successfully migrated contact messages from localStorage to Supabase:', data);
         return { success: true, error: null };
       } catch (parseError) {
-        console.error('Error parsing localStorage messages:', parseError);
+        // console.error('Error parsing localStorage messages:', parseError);
         return { success: false, error: parseError };
       }
     } catch (error) {
-      console.error('Unexpected error during contact messages migration:', error);
+      // console.error('Unexpected error during contact messages migration:', error);
+      // console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      return { success: false, error };
+    }
+  }
+};
+
+// Contact info service voor beheer van contactgegevens en social links
+export const contactInfoService = {
+  // Standaard contactinformatie als deze nog niet in de database bestaat
+  defaultContactInfo: {
+    email: "jorian.bracke@example.com",
+    phone: "+31 6 12345678",
+    location: "Amsterdam, Nederland",
+    socialLinks: [
+      { id: "1", platform: "GitHub", url: "https://github.com", icon: "github" },
+      { id: "2", platform: "LinkedIn", url: "https://linkedin.com", icon: "linkedin" },
+      { id: "3", platform: "Twitter", url: "https://twitter.com", icon: "twitter" }
+    ]
+  },
+
+  // Haal contactinformatie op
+  async getContactInfo(): Promise<{ data: any; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from(CONTACT_INFO_TABLE)
+        .select('*')
+        .single();
+      
+      if (error) {
+        // Als er geen data is, gebruik de standaard info
+        if (error.code === 'PGRST116') { // Not found error
+          return { data: this.defaultContactInfo, error: null };
+        }
+        
+        return { data: null, error };
+      }
+      
+      // Verwerk de data zodat het compatible is met frontend verwachtingen
+      if (data) {
+        try {
+          // Zorg ervoor dat social links correct geparsed worden
+          if (data.socialLinks && typeof data.socialLinks === 'string') {
+            try {
+              data.socialLinks = JSON.parse(data.socialLinks);
+            } catch (e) {
+              data.socialLinks = [];
+            }
+          }
+        } catch (error) {
+          return { data: null, error };
+        }
+      }
+      
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  // Update contactinformatie
+  async updateContactInfo(contactInfo: any): Promise<{ data: any; error: any }> {
+    try {
+      // Bereid de data voor voor opslag in Supabase
+      const formattedContactInfo = { ...contactInfo };
+      
+      // Converteer arrays naar strings voor opslag
+      if (Array.isArray(formattedContactInfo.socialLinks)) {
+        formattedContactInfo.socialLinks = JSON.stringify(formattedContactInfo.socialLinks);
+      }
+      
+      // Controleer of de record al bestaat
+      const { data: existingData, error: checkError } = await supabase
+        .from(CONTACT_INFO_TABLE)
+        .select('id')
+        .single();
+      
+      if (checkError && checkError.code !== 'PGRST116') { // Not found error is expected if no record exists
+        return { data: null, error: checkError };
+      }
+      
+      let result;
+      
+      if (existingData) {
+        // Update bestaande record
+        result = await supabase
+          .from(CONTACT_INFO_TABLE)
+          .update(formattedContactInfo)
+          .eq('id', existingData.id)
+          .select();
+      } else {
+        // Maak nieuwe record aan
+        result = await supabase
+          .from(CONTACT_INFO_TABLE)
+          .insert(formattedContactInfo)
+          .select();
+      }
+      
+      return result;
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  // Migreer contactinformatie van lokale opslag (indien nodig)
+  async migrateFromLocalStorage(): Promise<{ success: boolean; error: any }> {
+    try {
+      console.log('START migrateFromLocalStorage for contact info');
+      
+      // Controleer of er al contactinfo in de database staat
+      const { data: existingData, error: checkError } = await supabase
+        .from(CONTACT_INFO_TABLE)
+        .select('id')
+        .single();
+      
+      // Als er al data is, stop dan (om te voorkomen dat we bestaande info overschrijven)
+      if (!checkError) {
+        console.log('Contact info already exists in database, no migration needed');
+        return { success: true, error: null };
+      }
+      
+      // Gebruik de standaard contactinfo als basis
+      const contactInfo = this.defaultContactInfo;
+      
+      // Bereid de data voor voor opslag in Supabase
+      const formattedContactInfo = { ...contactInfo };
+      
+      // Converteer arrays naar strings voor opslag
+      if (Array.isArray(formattedContactInfo.socialLinks)) {
+        formattedContactInfo.socialLinks = JSON.stringify(formattedContactInfo.socialLinks);
+      }
+      
+      // Voeg toe aan de database
+      console.log('Inserting default contact info into database');
+      const { data, error } = await supabase
+        .from(CONTACT_INFO_TABLE)
+        .insert(formattedContactInfo)
+        .select();
+      
+      if (error) {
+        console.error('Error migrating contact info to Supabase:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        return { success: false, error };
+      }
+      
+      console.log('Successfully migrated contact info to Supabase:', data);
+      return { success: true, error: null };
+    } catch (error) {
+      console.error('Unexpected error during contact info migration:', error);
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       return { success: false, error };
     }

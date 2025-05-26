@@ -33,6 +33,11 @@ export default function Projects() {
   const filteredProjects = useMemo(() => {
     // First filter the projects
     const filtered = projects.filter((project) => {
+      // Filter out hidden projects
+      if (project.hidden) {
+        return false;
+      }
+      
       // Get category labels for text search
       const categoryLabels = project.categories.map(cat => {
         const categoryObj = categories.find(c => c.value === cat);

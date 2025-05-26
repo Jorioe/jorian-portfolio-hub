@@ -3,14 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ImagePlus, Upload, X, Link as LinkIcon, Eye } from 'lucide-react';
+import { ImagePlus, Upload, X, Link as LinkIcon, Eye, FileVideo } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { MediaSelector } from './MediaSelector';
 import { mediaService } from '@/lib/database';
 
-interface ImageUploaderProps {
+interface MediaUploaderProps {
   defaultValue?: string;
-  onImageUploaded: (url: string) => void;
+  onMediaUploaded: (url: string) => void;
+  mediaType?: 'image' | 'video' | 'all';
+  label?: string;
 }
 
 // Globale cache voor afbeeldingen
@@ -63,35 +65,78 @@ const preloadMediaLibraryImages = async () => {
 // Roep dit aan bij het laden van de app
 preloadMediaLibraryImages();
 
-export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploaderProps) {
-  const [imageUrl, setImageUrl] = useState(defaultValue);
+export function MediaUploader({ defaultValue = '', onMediaUploaded, mediaType = 'image', label = 'Bestand' }: MediaUploaderProps) {
+  const [mediaUrl, setMediaUrl] = useState(defaultValue);
   const [inputUrl, setInputUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isPreloading, setIsPreloading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [showMediaSelector, setShowMediaSelector] = useState(false);
+  const [mediaManagerMode, setMediaManagerMode] = useState<'select' | 'manage'>('select');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Voorlaad de afbeelding bij het initialiseren
+  // Voorlaad de media bij het initialiseren
   useEffect(() => {
     if (defaultValue) {
-      setImageUrl(defaultValue);
+      setMediaUrl(defaultValue);
       
-      setIsPreloading(true);
-      preloadImage(defaultValue).then((success) => {
+      if (isImageUrl(defaultValue)) {
+        setIsPreloading(true);
+        preloadImage(defaultValue).then((success) => {
+          setIsPreloading(false);
+          if (!success) {
+            console.warn(`Kon afbeelding niet laden: ${defaultValue}`);
+          }
+        });
+      } else {
         setIsPreloading(false);
-        if (!success) {
-          console.warn(`Kon afbeelding niet laden: ${defaultValue}`);
-        }
-      });
+      }
     } else {
       setIsPreloading(false);
     }
   }, [defaultValue]);
 
+  // Controleer of een URL een afbeelding is
+  const isImageUrl = (url: string) => {
+    return (
+      url.match(/\.(jpeg|jpg|gif|png|webp)$/i) !== null ||
+      url.startsWith('data:image/')
+    );
+  };
+
+  // Controleer of een URL een video is
+  const isVideoUrl = (url: string) => {
+    return (
+      url.match(/\.(mp4|webm|ogg|mov)$/i) !== null ||
+      url.startsWith('data:video/') ||
+      url.includes('youtube.com') ||
+      url.includes('youtu.be')
+    );
+  };
+
+  const getAcceptTypes = () => {
+    if (mediaType === 'image') return 'image/*';
+    if (mediaType === 'video') return 'video/*';
+    return 'image/*,video/*';
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Controleer of het bestandstype overeenkomt met het gewenste mediaType
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+
+    if (mediaType === 'image' && !isImage) {
+      toast.error('Selecteer alstublieft een afbeeldingsbestand.');
+      return;
+    }
+
+    if (mediaType === 'video' && !isVideo) {
+      toast.error('Selecteer alstublieft een videobestand.');
+      return;
+    }
 
     setIsUploading(true);
     
@@ -107,8 +152,8 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
       }
       
       if (mediaItem) {
-        setImageUrl(mediaItem.url);
-        onImageUploaded(mediaItem.url);
+        setMediaUrl(mediaItem.url);
+        onMediaUploaded(mediaItem.url);
         toast.success('Bestand succesvol geüpload');
       }
     } catch (error) {
@@ -126,42 +171,127 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
       // Controleer of het een geldige URL is (basic controle)
       new URL(inputUrl);
       
-      setIsPreloading(true);
-      preloadImage(inputUrl).then((success) => {
-        setIsPreloading(false);
-        
-        if (success) {
-          setImageUrl(inputUrl);
-          onImageUploaded(inputUrl);
-          setInputUrl('');
-          toast.success('Afbeelding URL toegevoegd');
-        } else {
-          toast.error('Kon de afbeelding niet laden. Controleer de URL.');
-        }
-      });
+      // Controleer of het mediatype overeenkomt met wat we willen
+      const isImage = isImageUrl(inputUrl);
+      const isVideo = isVideoUrl(inputUrl);
+
+      if (mediaType === 'image' && !isImage) {
+        toast.error('Voer een geldige afbeeldings-URL in.');
+        return;
+      }
+
+      if (mediaType === 'video' && !isVideo) {
+        toast.error('Voer een geldige video-URL in.');
+        return;
+      }
+      
+      if (isImage) {
+        setIsPreloading(true);
+        preloadImage(inputUrl).then((success) => {
+          setIsPreloading(false);
+          
+          if (success) {
+            setMediaUrl(inputUrl);
+            onMediaUploaded(inputUrl);
+            setInputUrl('');
+            toast.success('Media URL toegevoegd');
+          } else {
+            toast.error('Kon de afbeelding niet laden. Controleer de URL.');
+          }
+        });
+      } else {
+        // Voor video's doen we geen preloading
+        setMediaUrl(inputUrl);
+        onMediaUploaded(inputUrl);
+        setInputUrl('');
+        toast.success('Media URL toegevoegd');
+      }
     } catch (error) {
       toast.error('Voer een geldige URL in');
     }
   };
 
-  const clearImage = () => {
-    setImageUrl('');
-    onImageUploaded('');
+  const clearMedia = () => {
+    setMediaUrl('');
+    onMediaUploaded('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
   const openMediaLibrary = () => {
-    // Toon de media selector modal
-    window.open('/dashboard/media', '_blank');
+    // Open de MediaSelector in manage mode
+    setMediaManagerMode('manage');
+    setShowMediaSelector(true);
   };
 
-  const handleImageSelected = (url: string) => {
-    setImageUrl(url);
-    onImageUploaded(url);
+  const handleMediaSelected = (url: string) => {
+    setMediaUrl(url);
+    onMediaUploaded(url);
     setIsPreloading(false);
   };
+
+  const renderPreview = () => {
+    if (!mediaUrl) return null;
+
+    if (isVideoUrl(mediaUrl)) {
+      if (mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be')) {
+        // Extract YouTube video ID
+        let videoId = '';
+        if (mediaUrl.includes('youtube.com/watch?v=')) {
+          videoId = mediaUrl.split('v=')[1].split('&')[0];
+        } else if (mediaUrl.includes('youtu.be/')) {
+          videoId = mediaUrl.split('youtu.be/')[1].split('?')[0];
+        }
+        
+        return (
+          <div className="relative w-full h-40 bg-muted rounded-md overflow-hidden">
+            <iframe 
+              src={`https://www.youtube.com/embed/${videoId}`}
+              className="w-full h-full"
+              title="YouTube video preview"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            ></iframe>
+          </div>
+        );
+      }
+      
+      return (
+        <div className="relative w-full h-40 bg-muted rounded-md overflow-hidden">
+          <video 
+            src={mediaUrl} 
+            className="w-full h-full object-contain" 
+            controls
+          ></video>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="relative w-full h-40 bg-muted rounded-md overflow-hidden">
+        {isPreloading ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : (
+          <img 
+            src={mediaUrl} 
+            alt="Voorbeeld" 
+            className="w-full h-full object-contain"
+            onError={() => toast.error('Kon afbeelding niet laden')}
+          />
+        )}
+      </div>
+    );
+  };
+
+  // Bepaal het juiste label voor de knoppen
+  const fileTypeLabel = mediaType === 'image' ? 'afbeelding' : 
+                        mediaType === 'video' ? 'video' : 'bestand';
+  const fileIcon = mediaType === 'video' ? 
+                  <FileVideo size={16} /> : 
+                  <ImagePlus size={16} />;
 
   return (
     <div className="space-y-4">
@@ -174,14 +304,14 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
             disabled={isUploading}
             className="flex items-center gap-2"
           >
-            <ImagePlus size={16} />
-            {isUploading ? 'Uploading...' : 'Bestand kiezen'}
+            {fileIcon}
+            {isUploading ? 'Uploading...' : `${label} kiezen`}
           </Button>
           
           <Input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={getAcceptTypes()}
             onChange={handleFileUpload}
             className="hidden"
           />
@@ -191,7 +321,7 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
             variant="outline"
             onClick={openMediaLibrary}
           >
-            Media bibliotheek
+            Beheer media
           </Button>
           
           <Button
@@ -206,11 +336,11 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
       
       <div className="flex items-end gap-2">
         <div className="flex-1">
-          <Label htmlFor="imageUrl">Of voeg een URL toe</Label>
+          <Label htmlFor="mediaUrl">Of voeg een URL toe</Label>
           <Input
-            id="imageUrl"
+            id="mediaUrl"
             type="url"
-            placeholder="https://example.com/image.jpg"
+            placeholder={`https://example.com/${fileTypeLabel}.${mediaType === 'video' ? 'mp4' : 'jpg'}`}
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
           />
@@ -227,13 +357,13 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
         </Button>
       </div>
           
-      {imageUrl && (
+      {mediaUrl && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex-1 truncate text-sm text-muted-foreground">
-              {imageUrl.startsWith('data:') 
-                ? 'Geüploade afbeelding' 
-                : imageUrl}
+              {mediaUrl.startsWith('data:') 
+                ? `Geüpload ${fileTypeLabel}` 
+                : mediaUrl}
             </div>
             <div className="flex gap-2">
               <Button
@@ -248,7 +378,7 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
               <Button 
                 variant="ghost"
                 size="sm"
-                onClick={clearImage}
+                onClick={clearMedia}
                 className="h-8 w-8 p-0 text-destructive"
               >
                 <X size={16} />
@@ -257,22 +387,7 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
             </div>
           </div>
           
-          {showPreview && (
-            <div className="relative w-full h-40 bg-muted rounded-md overflow-hidden">
-              {isPreloading ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
-              </div>
-              ) : (
-                <img 
-                  src={imageUrl} 
-                  alt="Voorbeeld" 
-                  className="w-full h-full object-contain"
-                  onError={() => toast.error('Kon afbeelding niet laden')}
-                />
-              )}
-            </div>
-          )}
+          {showPreview && renderPreview()}
         </div>
       )}
 
@@ -280,8 +395,13 @@ export function ImageUploader({ defaultValue = '', onImageUploaded }: ImageUploa
       <MediaSelector 
         open={showMediaSelector}
         onOpenChange={setShowMediaSelector}
-        onSelect={handleImageSelected}
+        onSelect={handleMediaSelected}
+        mediaType={mediaType}
+        mode={mediaManagerMode}
       />
     </div>
   );
-} 
+}
+
+// Voor achterwaartse compatibiliteit, stellen we ImageUploader gelijk aan MediaUploader
+export const ImageUploader = MediaUploader; 

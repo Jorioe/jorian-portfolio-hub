@@ -86,6 +86,26 @@ Maak een tabel aan voor contactberichten:
      | created_at | timestamp with time zone | `now()` | ❌ | ✓ |
 3. Klik op "Save" om de tabel aan te maken
 
+## 1.4 Contact Info Tabel Aanmaken
+
+Maak een tabel aan voor contactinformatie en social links:
+
+1. Klik op "New Table" in de Table Editor
+2. Vul de volgende gegevens in:
+   - **Name**: `contact_info`
+   - **Enable Row Level Security (RLS)**: Aangevinkt
+   - **Columns**:
+     | Name | Type | Default Value | Primary | Nullable |
+     |------|------|--------------|---------|----------|
+     | id | uuid | `uuid_generate_v4()` | ✓ | ❌ |
+     | email | text | - | ❌ | ✓ |
+     | phone | text | - | ❌ | ✓ |
+     | location | text | - | ❌ | ✓ |
+     | socialLinks | text | - | ❌ | ✓ |
+     | created_at | timestamp with time zone | `now()` | ❌ | ✓ |
+     | updated_at | timestamp with time zone | `now()` | ❌ | ✓ |
+3. Klik op "Save" om de tabel aan te maken
+
 ## 2. Storage Bucket Aanmaken voor Media
 
 1. Ga naar "Storage" in het linkermenu van je Supabase Dashboard
@@ -164,6 +184,24 @@ Stel de volgende policies in voor de `contact_messages` tabel:
 4. **Using expression**: `(SELECT is_admin FROM auth.users WHERE auth.users.id = auth.uid())`
 5. **Check operations**: `UPDATE`, `DELETE`
 
+## 3.3 RLS Policies voor Contact Info
+
+Stel de volgende policies in voor de `contact_info` tabel:
+
+### Voor leesrechten (voor iedereen)
+1. Kies "Create a policy from scratch"
+2. **Policy name**: `Allow public read`
+3. **Target roles**: `authenticated`, `anon`
+4. **Using expression**: `true`
+5. **Check operation**: `SELECT`
+
+### Voor schrijfrechten (alleen admins)
+1. Kies "Create a policy from scratch"
+2. **Policy name**: `Allow admin write`
+3. **Target roles**: `authenticated`
+4. **Using expression**: `(SELECT is_admin FROM auth.users WHERE auth.users.id = auth.uid())`
+5. **Check operations**: `INSERT`, `UPDATE`, `DELETE`
+
 ## 4. Storage Policies Instellen
 
 Om toegang tot de media-bestanden te regelen:
@@ -241,6 +279,13 @@ De applicatie ondersteunt een geleidelijke migratie van localStorage naar de Sup
 3. Dit zal alle media bestanden uit localStorage overzetten naar de Supabase Storage bucket
 4. Na succesvolle migratie wordt de lokale opslag voor media items gewist
 
+### 6.5 Contactinformatie Migreren
+
+1. Ga naar de Contactinformatie pagina via het Admin Dashboard
+2. Klik op de "Migreer naar Database" knop (indien beschikbaar)
+3. Dit zal de contactgegevens en social links uit localStorage overzetten naar de `contact_info` tabel in Supabase
+4. Na succesvolle migratie wordt de lokale opslag voor contactinformatie gewist
+
 ### Fallback mechanisme
 
 De applicatie bevat een fallback mechanisme dat automatisch localStorage gebruikt wanneer:
@@ -248,7 +293,7 @@ De applicatie bevat een fallback mechanisme dat automatisch localStorage gebruik
 - Er een fout optreedt bij het benaderen van de database
 - De gebruiker geen internetverbinding heeft
 
-Dit zorgt ervoor dat de applicatie blijft functioneren, zelfs als er problemen zijn met de database verbinding.
+Dit zorgt ervoor dat de applicatie blijft functioneren, zelfs als er problemen zijn met de database verbinding.aarom
 
 ## 7. Problemen Oplossen
 
@@ -267,3 +312,23 @@ Controleer de volgende punten:
 2. Controleer of je bucket publiek is ingesteld voor publieke toegang tot media
 3. Zorg dat je storage policies correct zijn ingesteld
 4. Controleer in je browser console of er geen CORS-fouten zijn bij uploads 
+
+## 7. Project Zichtbaarheid Feature
+
+Om projecten te kunnen verbergen van de website zonder ze te verwijderen, moet je een `hidden` kolom toevoegen aan de `projects` tabel in Supabase:
+
+1. Log in op je [Supabase Dashboard](https://app.supabase.com/)
+2. Navigeer naar het project dat je gebruikt voor je portfolio
+3. Ga naar "Table Editor" in het linker menu
+4. Selecteer de `projects` tabel
+5. Klik op "Edit table" (potlood icoontje)
+6. Klik op "Add column"
+7. Vul de volgende gegevens in:
+   - **Name**: `hidden`
+   - **Type**: `boolean`
+   - **Default Value**: `false` 
+   - **Primary**: ❌
+   - **Nullable**: ✓ (optioneel)
+8. Klik op "Save" om de kolom toe te voegen
+
+Na het toevoegen van deze kolom kun je projecten verbergen en weer zichtbaar maken via het oogje-icoontje in het admin dashboard. Verborgen projecten worden niet getoond op de publieke projectenpagina. 
