@@ -25,13 +25,18 @@ export default function Footer() {
     <footer className="bg-secondary mt-auto border-t">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <div>
+          {/* Lege div met gelijke breedte voor balans */}
+          <div className="hidden md:block md:w-[120px]"></div>
+          
+          {/* Copyright in het midden */}
+          <div className="text-center">
             <span className="text-sm text-muted-foreground">
               &copy; {currentYear} Jorian Bracke. Alle rechten voorbehouden.
             </span>
           </div>
           
-          <div className="flex items-center space-x-6 mt-4 md:mt-0">
+          {/* Sociale media rechts */}
+          <div className="flex items-center space-x-6 mt-4 md:mt-0 md:w-[120px] justify-end">
             {homeContent.footerLinks.map((link, index) => (
               <a 
                 key={index}
