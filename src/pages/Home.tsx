@@ -141,31 +141,73 @@ export default function Home() {
     let isDown = false;
     let startX: number;
     let scrollLeft: number;
+    let momentumID: number;
+    let velocity = 0;
+    let lastPageX = 0;
+    let rafID: number;
+    
+    // Functie voor inertia scrolling
+    const momentum = () => {
+      if (Math.abs(velocity) > 0.1) {
+        timeline.scrollLeft -= velocity;
+        velocity *= 0.95; // Afname factor
+        momentumID = requestAnimationFrame(momentum);
+      }
+    };
     
     const onMouseDown = (e: MouseEvent) => {
       isDown = true;
       timeline.classList.add("grabbing");
       startX = e.pageX - timeline.offsetLeft;
       scrollLeft = timeline.scrollLeft;
+      lastPageX = e.pageX;
+      
+      // Cancel any ongoing momentum
+      cancelAnimationFrame(momentumID);
+      velocity = 0;
+      
+      // Voorkom tekstselectie tijdens het slepen
       e.preventDefault();
     };
     
     const onMouseUp = () => {
+      if (!isDown) return;
       isDown = false;
       timeline.classList.remove("grabbing");
+      
+      // Start momentum
+      momentumID = requestAnimationFrame(momentum);
     };
     
     const onMouseLeave = () => {
-      isDown = false;
-      timeline.classList.remove("grabbing");
+      if (isDown) {
+        isDown = false;
+        timeline.classList.remove("grabbing");
+        
+        // Start momentum
+        momentumID = requestAnimationFrame(momentum);
+      }
     };
     
     const onMouseMove = (e: MouseEvent) => {
       if (!isDown) return;
       e.preventDefault();
+      
       const x = e.pageX - timeline.offsetLeft;
-      const walk = (x - startX) * 2; // *2 voor snellere scroll
-      timeline.scrollLeft = scrollLeft - walk;
+      const walk = (x - startX) * 1.2; // Iets langzamer voor preciezere controle
+      
+      // Bereken velocity voor momentum scrolling
+      velocity = (lastPageX - e.pageX) * 0.1;
+      lastPageX = e.pageX;
+      
+      // Smooth animation met requestAnimationFrame
+      if (rafID) {
+        cancelAnimationFrame(rafID);
+      }
+      
+      rafID = requestAnimationFrame(() => {
+        timeline.scrollLeft = scrollLeft - walk;
+      });
     };
     
     // Touch events voor mobiele apparaten
@@ -173,18 +215,41 @@ export default function Home() {
       isDown = true;
       startX = e.touches[0].pageX - timeline.offsetLeft;
       scrollLeft = timeline.scrollLeft;
+      lastPageX = e.touches[0].pageX;
+      
+      // Cancel any ongoing momentum
+      cancelAnimationFrame(momentumID);
+      velocity = 0;
     };
     
     const onTouchEnd = () => {
+      if (!isDown) return;
       isDown = false;
+      
+      // Start momentum
+      momentumID = requestAnimationFrame(momentum);
     };
     
     const onTouchMove = (e: TouchEvent) => {
       if (!isDown) return;
+      // Voorkom pagina scrollen tijdens horizontale tijdlijn swipe
       e.preventDefault();
+      
       const x = e.touches[0].pageX - timeline.offsetLeft;
-      const walk = (x - startX) * 2;
-      timeline.scrollLeft = scrollLeft - walk;
+      const walk = (x - startX) * 1.0; // Nog langzamer voor touch voor betere controle
+      
+      // Bereken velocity voor momentum scrolling
+      velocity = (lastPageX - e.touches[0].pageX) * 0.1;
+      lastPageX = e.touches[0].pageX;
+      
+      // Smooth animation met requestAnimationFrame
+      if (rafID) {
+        cancelAnimationFrame(rafID);
+      }
+      
+      rafID = requestAnimationFrame(() => {
+        timeline.scrollLeft = scrollLeft - walk;
+      });
     };
     
     timeline.addEventListener('mousedown', onMouseDown);
@@ -205,6 +270,10 @@ export default function Home() {
       timeline.removeEventListener('touchstart', onTouchStart);
       timeline.removeEventListener('touchend', onTouchEnd);
       timeline.removeEventListener('touchmove', onTouchMove);
+      
+      // Clean up any animation frames
+      cancelAnimationFrame(momentumID);
+      cancelAnimationFrame(rafID);
     };
   }, []);
   
@@ -308,7 +377,18 @@ export default function Home() {
               <div 
                 ref={timelineRef}
                 className="flex flex-nowrap overflow-x-auto gap-6 pb-8 pt-2 px-2 snap-x cursor-grab scrollbar-hide select-none"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth' }}
+                style={{ 
+                  scrollbarWidth: 'none', 
+                  msOverflowStyle: 'none', 
+                  scrollBehavior: 'auto', // Veranderd van 'smooth' naar 'auto' voor custom inertia
+                  WebkitOverflowScrolling: 'touch',
+                  scrollSnapType: 'x proximity',
+                  overflowX: 'auto',
+                  paddingBottom: '20px',
+                  touchAction: 'pan-x', // Zorgt voor betere touch handling
+                  willChange: 'transform, scroll-position', // Performance optimalisatie
+                  transition: 'all 0.2s ease-out' // Subtiele transitie voor soepelere beweging
+                }}
               >
                 {sortedTimelineItems.map((item, index) => {
                   // Bepaal de kleur van de indicator op basis van het type
@@ -379,10 +459,10 @@ export default function Home() {
               </div>
               
               {/* Helper text */}
-              {/* <p className="text-center text-sm text-muted-foreground mt-4">
-                <span className="hidden md:inline">Sleep horizontaal</span>
-                <span className="md:hidden">Swipe</span> om meer te zien
-              </p> */}
+              <p className="text-center text-sm text-muted-foreground mt-4">
+                {/* <span className="hidden md:inline">Sleep horizontaal</span> */}
+                <span className="md:hidden">Swipe</span>
+              </p>
             </div>
           </div>
         </section>
