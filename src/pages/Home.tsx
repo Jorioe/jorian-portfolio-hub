@@ -150,14 +150,19 @@ export default function Home() {
     const momentum = () => {
       if (Math.abs(velocity) > 0.1) {
         timeline.scrollLeft -= velocity;
-        velocity *= 0.95; // Afname factor
+        // velocity *= 0.95; // Afname factor
+        velocity *= 0; // Afname factor
         momentumID = requestAnimationFrame(momentum);
+      } else {
+        // Aan het einde van momentum, laat snap werken
+        velocity = 0;
       }
     };
     
     const onMouseDown = (e: MouseEvent) => {
       isDown = true;
       timeline.classList.add("grabbing");
+      timeline.style.scrollSnapType = "none"; // Tijdens slepen geen snap
       startX = e.pageX - timeline.offsetLeft;
       scrollLeft = timeline.scrollLeft;
       lastPageX = e.pageX;
@@ -174,6 +179,7 @@ export default function Home() {
       if (!isDown) return;
       isDown = false;
       timeline.classList.remove("grabbing");
+      timeline.style.scrollSnapType = "x mandatory"; // Herstel snap bij loslaten
       
       // Start momentum
       momentumID = requestAnimationFrame(momentum);
@@ -183,6 +189,7 @@ export default function Home() {
       if (isDown) {
         isDown = false;
         timeline.classList.remove("grabbing");
+        timeline.style.scrollSnapType = "x mandatory"; // Herstel snap bij loslaten
         
         // Start momentum
         momentumID = requestAnimationFrame(momentum);
@@ -194,25 +201,20 @@ export default function Home() {
       e.preventDefault();
       
       const x = e.pageX - timeline.offsetLeft;
-      const walk = (x - startX) * 1.2; // Iets langzamer voor preciezere controle
+      const walk = (x - startX) * 1.5; // Iets sneller voor betere respons
       
       // Bereken velocity voor momentum scrolling
-      velocity = (lastPageX - e.pageX) * 0.1;
+      velocity = (lastPageX - e.pageX) * 0.2; // Verhoogd voor betere momentum
       lastPageX = e.pageX;
       
-      // Smooth animation met requestAnimationFrame
-      if (rafID) {
-        cancelAnimationFrame(rafID);
-      }
-      
-      rafID = requestAnimationFrame(() => {
-        timeline.scrollLeft = scrollLeft - walk;
-      });
+      // Direct scrollen voor responsievere beweging
+      timeline.scrollLeft = scrollLeft - walk;
     };
     
     // Touch events voor mobiele apparaten
     const onTouchStart = (e: TouchEvent) => {
       isDown = true;
+      timeline.style.scrollSnapType = "none"; // Tijdens slepen geen snap
       startX = e.touches[0].pageX - timeline.offsetLeft;
       scrollLeft = timeline.scrollLeft;
       lastPageX = e.touches[0].pageX;
@@ -225,6 +227,7 @@ export default function Home() {
     const onTouchEnd = () => {
       if (!isDown) return;
       isDown = false;
+      timeline.style.scrollSnapType = "x mandatory"; // Herstel snap bij loslaten
       
       // Start momentum
       momentumID = requestAnimationFrame(momentum);
@@ -236,20 +239,14 @@ export default function Home() {
       e.preventDefault();
       
       const x = e.touches[0].pageX - timeline.offsetLeft;
-      const walk = (x - startX) * 1.0; // Nog langzamer voor touch voor betere controle
+      const walk = (x - startX) * 1.2; // Iets sneller voor touch voor betere respons
       
       // Bereken velocity voor momentum scrolling
-      velocity = (lastPageX - e.touches[0].pageX) * 0.1;
+      velocity = (lastPageX - e.touches[0].pageX) * 0.2; // Verhoogd voor betere momentum
       lastPageX = e.touches[0].pageX;
       
-      // Smooth animation met requestAnimationFrame
-      if (rafID) {
-        cancelAnimationFrame(rafID);
-      }
-      
-      rafID = requestAnimationFrame(() => {
-        timeline.scrollLeft = scrollLeft - walk;
-      });
+      // Direct scrollen voor responsievere beweging
+      timeline.scrollLeft = scrollLeft - walk;
     };
     
     timeline.addEventListener('mousedown', onMouseDown);
@@ -376,13 +373,14 @@ export default function Home() {
               {/* Timeline container with grab cursor */}
               <div 
                 ref={timelineRef}
-                className="flex flex-nowrap overflow-x-auto gap-6 pb-8 pt-2 px-2 snap-x cursor-grab scrollbar-hide select-none"
+                className="flex flex-nowrap overflow-x-auto gap-6 pb-8 pt-2 px-8 snap-x cursor-grab scrollbar-hide select-none"
                 style={{ 
                   scrollbarWidth: 'none', 
                   msOverflowStyle: 'none', 
                   scrollBehavior: 'auto', // Veranderd van 'smooth' naar 'auto' voor custom inertia
                   WebkitOverflowScrolling: 'touch',
-                  scrollSnapType: 'x proximity',
+                  scrollSnapType: 'x mandatory', // Aangepast van 'proximity' naar 'mandatory' voor alleen vastkliken bij loslaten
+                  // scrollSnapStop: 'always', // Zorgt ervoor dat het altijd stopt bij een snap point
                   overflowX: 'auto',
                   paddingBottom: '20px',
                   touchAction: 'pan-x', // Zorgt voor betere touch handling
@@ -417,7 +415,8 @@ export default function Home() {
                   return (
                     <div 
                       key={index} 
-                      className={`snap-start min-w-[280px] md:min-w-[350px] flex-shrink-0 bg-card rounded-lg shadow-md p-6 border ${isOngoing ? 'border-' + dotColorClass.replace('bg-', '') + '/50 shadow-lg shadow-' + dotColorClass.replace('bg-', '') + '/10' : 'border-border/30'} hover:shadow-lg transition-all duration-300 hover:border-primary/20 relative z-10`}
+                      // className={`snap-center min-w-[280px] md:min-w-[350px] flex-shrink-0 bg-card rounded-lg shadow-md p-6 border ${isOngoing ? 'border-' + dotColorClass.replace('bg-', '') + '/50 shadow-lg shadow-' + dotColorClass.replace('bg-', '') + '/10' : 'border-border/30'} hover:shadow-lg transition-all duration-300 hover:border-primary/20 relative z-10`}
+                      className={`min-w-[280px] md:min-w-[350px] flex-shrink-0 bg-card rounded-lg shadow-md p-6 border ${isOngoing ? 'border-' + dotColorClass.replace('bg-', '') + '/50 shadow-lg shadow-' + dotColorClass.replace('bg-', '') + '/10' : 'border-border/30'} hover:shadow-lg transition-all duration-300 hover:border-primary/20 relative z-10`}
                     >
                       {isOngoing && (
                         <div className="absolute -top-2.5 right-4 px-2 py-0.5 bg-green-500 text-white text-[10px] font-medium rounded-sm uppercase tracking-wider">
@@ -460,8 +459,8 @@ export default function Home() {
               
               {/* Helper text */}
               <p className="text-center text-sm text-muted-foreground mt-4">
-                {/* <span className="hidden md:inline">Sleep horizontaal</span> */}
-                <span className="md:hidden">Swipe</span>
+                {/* <span className="hidden md:inline">Sleep horizontaal</span>
+                <span className="md:hidden">Swipe</span> om meer te zien  */}
               </p>
             </div>
           </div>

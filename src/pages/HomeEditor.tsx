@@ -37,6 +37,7 @@ export default function HomeEditor() {
   const { homeContent, updateHomeContent, loading, migrateToDatabase, reloadHomeContent } = useHomeContent();
   const { projects } = useProjects();
   const [isLoading, setIsLoading] = useState(false);
+  const [openTimelineItems, setOpenTimelineItems] = useState<string[]>([]);
   const [editableContent, setEditableContent] = useState<HomeContent>({
     heroTitle: '',
     heroSubtitle: '',
@@ -63,6 +64,14 @@ export default function HomeEditor() {
     if (!loading) {
       // console.log('Setting editableContent with featuredProjects:', homeContent.featuredProjects);
       setEditableContent(homeContent);
+      
+      // Reset de open items op basis van de geladen timelineItems
+      if (homeContent.timelineItems && homeContent.timelineItems.length > 0) {
+        // Zet het laatst toegevoegde item open als er items zijn
+        setOpenTimelineItems([`item-${homeContent.timelineItems.length - 1}`]);
+      } else {
+        setOpenTimelineItems([]);
+      }
     }
   }, [homeContent, loading]);
 
@@ -157,12 +166,29 @@ export default function HomeEditor() {
     
     const updatedTimelineItems = [...(editableContent.timelineItems || []), newItem];
     handleInputChange('timelineItems', updatedTimelineItems);
+    
+    // Zet het nieuwe item automatisch open
+    const newItemIndex = updatedTimelineItems.length - 1;
+    setOpenTimelineItems(prev => [...prev, `item-${newItemIndex}`]);
   };
   
   // Verwijder een tijdlijn item
   const removeTimelineItem = (index: number) => {
     const updatedTimelineItems = (editableContent.timelineItems || []).filter((_, i) => i !== index);
     handleInputChange('timelineItems', updatedTimelineItems);
+    
+    // Bijwerken van de open items
+    setOpenTimelineItems(prev => {
+      const newOpenItems = prev.filter(id => id !== `item-${index}`);
+      // Hernoem item ids met hogere index om ze correct te laten mappen
+      return newOpenItems.map(id => {
+        const itemIndex = parseInt(id.split('-')[1]);
+        if (itemIndex > index) {
+          return `item-${itemIndex - 1}`;
+        }
+        return id;
+      });
+    });
   };
   
   // Update een tijdlijn item
@@ -185,6 +211,23 @@ export default function HomeEditor() {
     newItems[index - 1] = temp;
     
     handleInputChange('timelineItems', newItems);
+    
+    // Bijwerken van de open items
+    setOpenTimelineItems(prev => {
+      const newOpenItems = [...prev];
+      const hasCurrentOpen = newOpenItems.includes(`item-${index}`);
+      const hasPrevOpen = newOpenItems.includes(`item-${index-1}`);
+      
+      if (hasCurrentOpen && !hasPrevOpen) {
+        newOpenItems.splice(newOpenItems.indexOf(`item-${index}`), 1);
+        newOpenItems.push(`item-${index-1}`);
+      } else if (!hasCurrentOpen && hasPrevOpen) {
+        newOpenItems.splice(newOpenItems.indexOf(`item-${index-1}`), 1);
+        newOpenItems.push(`item-${index}`);
+      }
+      
+      return newOpenItems;
+    });
   };
   
   // Verplaats een tijdlijn item omlaag
@@ -197,6 +240,23 @@ export default function HomeEditor() {
     newItems[index + 1] = temp;
     
     handleInputChange('timelineItems', newItems);
+    
+    // Bijwerken van de open items
+    setOpenTimelineItems(prev => {
+      const newOpenItems = [...prev];
+      const hasCurrentOpen = newOpenItems.includes(`item-${index}`);
+      const hasNextOpen = newOpenItems.includes(`item-${index+1}`);
+      
+      if (hasCurrentOpen && !hasNextOpen) {
+        newOpenItems.splice(newOpenItems.indexOf(`item-${index}`), 1);
+        newOpenItems.push(`item-${index+1}`);
+      } else if (!hasCurrentOpen && hasNextOpen) {
+        newOpenItems.splice(newOpenItems.indexOf(`item-${index+1}`), 1);
+        newOpenItems.push(`item-${index}`);
+      }
+      
+      return newOpenItems;
+    });
   };
 
   // Opslaan van de content
@@ -558,7 +618,12 @@ export default function HomeEditor() {
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            <Accordion type="multiple" className="w-full">
+                            <Accordion 
+                              type="multiple" 
+                              className="w-full"
+                              value={openTimelineItems}
+                              onValueChange={setOpenTimelineItems}
+                            >
                               {(editableContent.timelineItems || []).map((item, index) => (
                                 <AccordionItem value={`item-${index}`} key={index} className="border data-[state=open]:bg-accent/40 rounded-lg mb-3 bg-card">
                                   <AccordionTrigger className="px-4 py-3 hover:no-underline rounded-t-lg">
