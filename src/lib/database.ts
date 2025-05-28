@@ -747,6 +747,16 @@ export const homeContentService = {
               data.footerLinks = [];
             }
           }
+          
+          // Zorg ervoor dat timelineItems correct geparsed wordt
+          if (data.timelineItems && typeof data.timelineItems === 'string') {
+            try {
+              data.timelineItems = JSON.parse(data.timelineItems);
+            } catch (e) {
+              // console.error('Error parsing timelineItems:', e);
+              data.timelineItems = [];
+            }
+          }
         } catch (error) {
           // console.error('Error processing home content data:', error);
           return { data: null, error };
@@ -782,6 +792,11 @@ export const homeContentService = {
       if (Array.isArray(formattedContent.footerLinks)) {
         // console.log('Converting footerLinks array to string');
         formattedContent.footerLinks = JSON.stringify(formattedContent.footerLinks);
+      }
+      
+      if (Array.isArray(formattedContent.timelineItems)) {
+        // console.log('Converting timelineItems array to string');
+        formattedContent.timelineItems = JSON.stringify(formattedContent.timelineItems);
       }
       
       // console.log('Formatted content ready for database:', formattedContent);

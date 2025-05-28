@@ -28,6 +28,15 @@ export interface HomeContent {
     url: string;
     icon?: string;
   }[];
+  timelineTitle?: string;
+  timelineItems?: {
+    period: string;
+    type?: string;
+    title: string;
+    institution?: string;
+    company?: string;
+    description?: string;
+  }[];
 }
 
 // Interface voor de context
@@ -68,7 +77,9 @@ const defaultHomeContent: HomeContent = {
     { title: "GitHub", url: "https://github.com" },
     { title: "LinkedIn", url: "https://linkedin.com" },
     { title: "Instagram", url: "https://instagram.com" }
-  ]
+  ],
+  timelineTitle: 'Opleiding & Ervaring',
+  timelineItems: []
 };
 
 // Creëer de context

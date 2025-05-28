@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ImageUploader } from '@/components/ImageUploader';
+import { MediaUploader } from '@/components/ImageUploader';
 import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft, Save, Trash2, MoveUp, MoveDown } from 'lucide-react';
 import { useHomeContent, HomeContent } from '@/lib/HomeContext';
@@ -53,7 +53,9 @@ export default function HomeEditor() {
     featuredProjectsSubtitle: '',
     skillsTitle: '',
     skillsItems: [],
-    footerLinks: []
+    footerLinks: [],
+    timelineTitle: 'Opleiding & Ervaring',
+    timelineItems: []
   });
   
   // Laad de huidige content wanneer de context is geladen
@@ -141,6 +143,60 @@ export default function HomeEditor() {
         variant: "destructive"
       });
     }
+  };
+
+  // Voeg een nieuw tijdlijn item toe
+  const addTimelineItem = () => {
+    const newItem = {
+      period: '',
+      type: 'Opleiding',
+      title: '',
+      institution: '',
+      description: ''
+    };
+    
+    const updatedTimelineItems = [...(editableContent.timelineItems || []), newItem];
+    handleInputChange('timelineItems', updatedTimelineItems);
+  };
+  
+  // Verwijder een tijdlijn item
+  const removeTimelineItem = (index: number) => {
+    const updatedTimelineItems = (editableContent.timelineItems || []).filter((_, i) => i !== index);
+    handleInputChange('timelineItems', updatedTimelineItems);
+  };
+  
+  // Update een tijdlijn item
+  const updateTimelineItem = (index: number, field: string, value: string) => {
+    const updatedTimelineItems = [...(editableContent.timelineItems || [])];
+    updatedTimelineItems[index] = { 
+      ...updatedTimelineItems[index], 
+      [field]: value 
+    };
+    handleInputChange('timelineItems', updatedTimelineItems);
+  };
+  
+  // Verplaats een tijdlijn item omhoog
+  const moveTimelineItemUp = (index: number) => {
+    if (index <= 0 || !(editableContent.timelineItems?.length)) return;
+    
+    const newItems = [...editableContent.timelineItems];
+    const temp = newItems[index];
+    newItems[index] = newItems[index - 1];
+    newItems[index - 1] = temp;
+    
+    handleInputChange('timelineItems', newItems);
+  };
+  
+  // Verplaats een tijdlijn item omlaag
+  const moveTimelineItemDown = (index: number) => {
+    if (!editableContent.timelineItems?.length || index >= editableContent.timelineItems.length - 1) return;
+    
+    const newItems = [...editableContent.timelineItems];
+    const temp = newItems[index];
+    newItems[index] = newItems[index + 1];
+    newItems[index + 1] = temp;
+    
+    handleInputChange('timelineItems', newItems);
   };
 
   // Opslaan van de content
@@ -263,9 +319,9 @@ export default function HomeEditor() {
             <div>
               <Label>Hero Afbeelding</Label>
               <div className="mt-2">
-                <ImageUploader
+                <MediaUploader
                   defaultValue={editableContent.heroImage}
-                  onImageUploaded={(url) => handleInputChange('heroImage', url)}
+                  onMediaUploaded={(url) => handleInputChange('heroImage', url)}
                 />
               </div>
               {editableContent.heroImage && (
@@ -331,9 +387,9 @@ export default function HomeEditor() {
                   <div>
                     <Label>About Afbeelding (mobiel)</Label>
                     <div className="mt-2">
-                      <ImageUploader
+                      <MediaUploader
                         defaultValue={editableContent.aboutImage}
-                        onImageUploaded={(url) => handleInputChange('aboutImage', url)}
+                        onMediaUploaded={(url) => handleInputChange('aboutImage', url)}
                       />
                     </div>
                     {editableContent.aboutImage && (
@@ -687,6 +743,161 @@ export default function HomeEditor() {
                   </div>
                 </CardContent>
               </Card>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* Timeline Section */}
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="timeline">
+            <AccordionTrigger>Opleiding & Ervaring Tijdlijn</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="timelineTitle">Titel voor de Tijdlijn Sectie</Label>
+                  <Input
+                    id="timelineTitle"
+                    value={editableContent.timelineTitle || ''}
+                    onChange={(e) => handleInputChange('timelineTitle', e.target.value)}
+                    placeholder="Bijv. Opleiding & Ervaring"
+                  />
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <Label>Tijdlijn Items</Label>
+                    <Button type="button" onClick={addTimelineItem} variant="outline" size="sm">
+                      Item Toevoegen
+                    </Button>
+                  </div>
+                  
+                  {(editableContent.timelineItems || []).length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      Nog geen tijdlijn items toegevoegd. Klik op 'Item Toevoegen' om te beginnen.
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {(editableContent.timelineItems || []).map((item, index) => (
+                        <Card key={index} className="relative">
+                          <CardHeader className="pb-2">
+                            <div className="flex justify-between items-center">
+                              <CardTitle className="text-lg">Item {index + 1}</CardTitle>
+                              <div className="flex space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => moveTimelineItemUp(index)}
+                                  disabled={index === 0}
+                                >
+                                  <MoveUp size={16} />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => moveTimelineItemDown(index)}
+                                  disabled={index === (editableContent.timelineItems || []).length - 1}
+                                >
+                                  <MoveDown size={16} />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeTimelineItem(index)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 size={16} />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4 pt-0">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor={`timeline-period-${index}`}>Periode</Label>
+                                <Input
+                                  id={`timeline-period-${index}`}
+                                  value={item.period || ''}
+                                  onChange={(e) => updateTimelineItem(index, 'period', e.target.value)}
+                                  placeholder="Bijv. 2020 - 2024"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`timeline-type-${index}`}>Type</Label>
+                                <Select
+                                  value={item.type || ''}
+                                  onValueChange={(value) => updateTimelineItem(index, 'type', value)}
+                                >
+                                  <SelectTrigger id={`timeline-type-${index}`}>
+                                    <SelectValue placeholder="Selecteer type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Opleiding">Opleiding</SelectItem>
+                                    <SelectItem value="Minor">Minor</SelectItem>
+                                    <SelectItem value="Werkervaring">Werkervaring</SelectItem>
+                                    <SelectItem value="Stage">Stage</SelectItem>
+                                    <SelectItem value="Certificaat">Certificaat</SelectItem>
+                                    <SelectItem value="Vrijwilligerswerk">Vrijwilligerswerk</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label htmlFor={`timeline-title-${index}`}>Titel</Label>
+                              <Input
+                                id={`timeline-title-${index}`}
+                                value={item.title || ''}
+                                onChange={(e) => updateTimelineItem(index, 'title', e.target.value)}
+                                placeholder="Bijv. HBO-ICT, Media Design"
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor={`timeline-institution-${index}`}>Instelling/Organisatie</Label>
+                                <Input
+                                  id={`timeline-institution-${index}`}
+                                  value={item.institution || item.company || ''}
+                                  onChange={(e) => {
+                                    const field = item.type === 'Werkervaring' || item.type === 'Stage' ? 'company' : 'institution';
+                                    updateTimelineItem(index, field, e.target.value);
+                                  }}
+                                  placeholder="Bijv. Fontys Hogeschool ICT"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label htmlFor={`timeline-description-${index}`}>Beschrijving (optioneel)</Label>
+                              <Textarea
+                                id={`timeline-description-${index}`}
+                                value={item.description || ''}
+                                onChange={(e) => updateTimelineItem(index, 'description', e.target.value)}
+                                placeholder="Korte beschrijving..."
+                                rows={2}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Extra knop onderaan voor het toevoegen van tijdlijn items */}
+                  {(editableContent.timelineItems || []).length > 0 && (
+                    <div className="flex justify-center mt-6">
+                      <Button 
+                        type="button" 
+                        onClick={addTimelineItem} 
+                        variant="outline"
+                        className="w-full md:w-auto"
+                      >
+                        Item Toevoegen
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>

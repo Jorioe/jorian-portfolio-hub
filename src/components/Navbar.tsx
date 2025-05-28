@@ -53,45 +53,45 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-background/80 backdrop-blur-sm shadow-sm' : 'bg-background'
-      }`}>
-        <nav className="container mx-auto flex items-center justify-between py-3 px-4 lg:px-6" aria-label="Global">
-          <div className="flex lg:flex-1">
-            <Link to="/" className="-m-1.5 p-1.5">
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled ? 'bg-background/80 backdrop-blur-sm shadow-sm' : 'bg-background'
+    }`}>
+      <nav className="container mx-auto flex items-center justify-between py-3 px-4 lg:px-6" aria-label="Global">
+        <div className="flex lg:flex-1">
+          <Link to="/" className="-m-1.5 p-1.5">
               <Logo />
-            </Link>
-          </div>
-          <div className="flex lg:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(true)}
+          </Link>
+        </div>
+        <div className="flex lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <span className="sr-only">Open menu</span>
+            <Menu className="h-6 w-6" aria-hidden="true" />
+          </Button>
+        </div>
+        <div className="hidden lg:flex lg:gap-x-12">
+          {navigation.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={`text-sm font-semibold leading-6 transition-colors ${
+                location.pathname === item.href
+                  ? "text-primary"
+                  : "text-foreground hover:text-primary"
+              }`}
             >
-              <span className="sr-only">Open menu</span>
-              <Menu className="h-6 w-6" aria-hidden="true" />
-            </Button>
-          </div>
-          <div className="hidden lg:flex lg:gap-x-12">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`text-sm font-semibold leading-6 transition-colors ${
-                  location.pathname === item.href
-                    ? "text-primary"
-                    : "text-foreground hover:text-primary"
-                }`}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
-          <div className="hidden lg:flex lg:flex-none lg:justify-end lg:ml-10">
-            {/* ThemeToggle component replaced with empty div to maintain height */}
-            <div className="h-10 w-10"></div>
-          </div>
-        </nav>
+              {item.name}
+            </Link>
+          ))}
+        </div>
+        <div className="hidden lg:flex lg:flex-none lg:justify-end lg:ml-10">
+          {/* ThemeToggle component replaced with empty div to maintain height */}
+          <div className="h-10 w-10"></div>
+        </div>
+      </nav>
       </header>
       
       {/* Mobile menu - apart van de header voor betere z-index handling */}
@@ -103,44 +103,44 @@ export default function Navbar() {
           />
           <div className="fixed inset-y-0 right-0 z-[10000] w-full overflow-y-auto bg-background px-4 sm:px-6 py-3 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
             <div className="flex items-center justify-between h-10">
-              <Link to="/" className="-m-1.5 p-1.5" onClick={() => setMobileMenuOpen(false)}>
+            <Link to="/" className="-m-1.5 p-1.5" onClick={() => setMobileMenuOpen(false)}>
                 <Logo />
-              </Link>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span className="sr-only">Close menu</span>
-                <X className="h-6 w-6" aria-hidden="true" />
-              </Button>
-            </div>
-            <div className="mt-6 flow-root">
-              <div className="-my-6 divide-y divide-border">
-                <div className="space-y-2 py-6">
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 ${
-                        location.pathname === item.href
-                          ? "text-primary"
-                          : "text-foreground hover:text-primary"
-                      }`}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-                <div className="py-6">
-                  {/* ThemeToggle comment out here as well */}
-                  {/* <ThemeToggle /> */}
-                </div>
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <span className="sr-only">Close menu</span>
+              <X className="h-6 w-6" aria-hidden="true" />
+            </Button>
+          </div>
+          <div className="mt-6 flow-root">
+            <div className="-my-6 divide-y divide-border">
+              <div className="space-y-2 py-6">
+                {navigation.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 ${
+                      location.pathname === item.href
+                        ? "text-primary"
+                        : "text-foreground hover:text-primary"
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+              <div className="py-6">
+                {/* ThemeToggle comment out here as well */}
+                {/* <ThemeToggle /> */}
               </div>
             </div>
           </div>
         </div>
+      </div>
       )}
     </>
   );

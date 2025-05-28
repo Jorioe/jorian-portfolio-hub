@@ -166,8 +166,8 @@ export function MediaSelector({ open, onOpenChange, onSelect, mediaType = 'image
   // Selecteer een media item
   const handleSelect = (url: string) => {
     if (mode === 'select') {
-      onSelect(url);
-      onOpenChange(false);
+    onSelect(url);
+    onOpenChange(false);
     } else {
       // In manage mode, selecteer het item voor verwijderen
       setSelectedItem(selectedItem === url ? null : url);
@@ -220,15 +220,15 @@ export function MediaSelector({ open, onOpenChange, onSelect, mediaType = 'image
         
         <div className="my-4 flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
               placeholder={`Zoek ${mediaTypeTitle}s...`}
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        
           {mode === 'manage' && (
             <div className="flex gap-2">
               <Button 
@@ -273,16 +273,16 @@ export function MediaSelector({ open, onOpenChange, onSelect, mediaType = 'image
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 py-2 overflow-y-auto">
               {filteredItems.map((item) => (
                 <div key={item.id} className="relative">
-                  <Button
-                    variant="outline"
+                <Button
+                  variant="outline"
                     className={`p-0 h-auto aspect-square overflow-hidden relative group w-full ${selectedItem === item.url ? 'ring-2 ring-primary' : ''}`}
-                    onClick={() => handleSelect(item.url)}
-                  >
+                  onClick={() => handleSelect(item.url)}
+                >
                     {renderPreview(item)}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <p className="text-white text-xs text-center p-2 truncate">{item.name}</p>
-                    </div>
-                  </Button>
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <p className="text-white text-xs text-center p-2 truncate">{item.name}</p>
+                  </div>
+                </Button>
                   
                   {mode === 'manage' && (
                     <Button
@@ -311,9 +311,9 @@ export function MediaSelector({ open, onOpenChange, onSelect, mediaType = 'image
           )}
           
           <div className="ml-auto">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
               {mode === 'select' ? 'Annuleren' : 'Sluiten'}
-            </Button>
+          </Button>
           </div>
         </div>
       </DialogContent>

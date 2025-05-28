@@ -81,13 +81,13 @@ export function MediaUploader({ defaultValue = '', onMediaUploaded, mediaType = 
       setMediaUrl(defaultValue);
       
       if (isImageUrl(defaultValue)) {
-        setIsPreloading(true);
-        preloadImage(defaultValue).then((success) => {
-          setIsPreloading(false);
-          if (!success) {
-            console.warn(`Kon afbeelding niet laden: ${defaultValue}`);
-          }
-        });
+      setIsPreloading(true);
+      preloadImage(defaultValue).then((success) => {
+        setIsPreloading(false);
+        if (!success) {
+          console.warn(`Kon afbeelding niet laden: ${defaultValue}`);
+        }
+      });
       } else {
         setIsPreloading(false);
       }
@@ -186,19 +186,19 @@ export function MediaUploader({ defaultValue = '', onMediaUploaded, mediaType = 
       }
       
       if (isImage) {
-        setIsPreloading(true);
-        preloadImage(inputUrl).then((success) => {
-          setIsPreloading(false);
-          
-          if (success) {
+      setIsPreloading(true);
+      preloadImage(inputUrl).then((success) => {
+        setIsPreloading(false);
+        
+        if (success) {
             setMediaUrl(inputUrl);
             onMediaUploaded(inputUrl);
-            setInputUrl('');
+          setInputUrl('');
             toast.success('Media URL toegevoegd');
-          } else {
-            toast.error('Kon de afbeelding niet laden. Controleer de URL.');
-          }
-        });
+        } else {
+          toast.error('Kon de afbeelding niet laden. Controleer de URL.');
+        }
+      });
       } else {
         // Voor video's doen we geen preloading
         setMediaUrl(inputUrl);
@@ -401,7 +401,7 @@ export function MediaUploader({ defaultValue = '', onMediaUploaded, mediaType = 
       />
     </div>
   );
-}
+} 
 
 // Voor achterwaartse compatibiliteit, stellen we ImageUploader gelijk aan MediaUploader
 export const ImageUploader = MediaUploader; 

@@ -61,6 +61,8 @@ Maak een tabel aan voor de inhoud van de homepagina:
      | skillsTitle | text | - | ❌ | ✓ |
      | skillsItems | text | - | ❌ | ✓ |
      | footerLinks | text | - | ❌ | ✓ |
+     | timelineTitle | text | - | ❌ | ✓ |
+     | timelineItems | text | - | ❌ | ✓ |
      | created_at | timestamp with time zone | `now()` | ❌ | ✓ |
      | updated_at | timestamp with time zone | `now()` | ❌ | ✓ |
 3. Klik op "Save" om de tabel aan te maken
@@ -332,3 +334,45 @@ Om projecten te kunnen verbergen van de website zonder ze te verwijderen, moet j
 8. Klik op "Save" om de kolom toe te voegen
 
 Na het toevoegen van deze kolom kun je projecten verbergen en weer zichtbaar maken via het oogje-icoontje in het admin dashboard. Verborgen projecten worden niet getoond op de publieke projectenpagina. 
+
+## 8. Tabel Aanpassingen voor CV/Tijdlijn Feature
+
+Als je de CV/Tijdlijn feature hebt toegevoegd aan je portfolio, moet je de bestaande `home_content` tabel in Supabase bijwerken:
+
+1. Log in op je [Supabase Dashboard](https://app.supabase.com/)
+2. Navigeer naar het project dat je gebruikt voor je portfolio
+3. Ga naar "Table Editor" in het linker menu
+4. Selecteer de `home_content` tabel
+5. Klik op "Edit table" (potlood icoontje)
+6. Klik op "Add column" en voeg de volgende kolommen toe:
+
+   ### Tijdlijn Titel Kolom
+   - **Name**: `timelineTitle` 
+   - **Type**: `text`
+   - **Default Value**: Leeg laten
+   - **Primary**: ❌
+   - **Nullable**: ✓
+
+   ### Tijdlijn Items Kolom
+   - **Name**: `timelineItems`
+   - **Type**: `text` (zal JSON-gegevens bevatten)
+   - **Default Value**: Leeg laten
+   - **Primary**: ❌  
+   - **Nullable**: ✓
+
+7. Klik op "Save" om de kolommen toe te voegen
+
+Na het toevoegen van deze kolommen kun je de tijdlijn functionaliteit gebruiken in de HomeEditor. De tijdlijn zal automatisch zichtbaar worden op de homepagina als je tijdlijn items hebt toegevoegd.
+
+De `timelineItems` kolom zal een JSON-string bevatten met een array van tijdlijn items, waarbij elk item de volgende structuur heeft:
+```json
+{
+  "period": "2020 - 2024",
+  "type": "Opleiding",
+  "title": "HBO-ICT, Media Design",
+  "institution": "Fontys Hogeschool ICT",
+  "description": "Specialisatie in user interface design en frontend development"
+}
+```
+
+Als je al een bestaande `home_content` record hebt in je database, kun je deze bijwerken via de HomeEditor op je admin dashboard. Gebruik de nieuwe "Opleiding & Ervaring Tijdlijn" sectie om je CV gegevens toe te voegen. 

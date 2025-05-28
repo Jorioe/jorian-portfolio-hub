@@ -130,7 +130,7 @@ ${data.message}
     // Direct bericht toevoegen aan contactberichten in dashboard zonder email te sturen
     try {
       addMessage(newMessage);
-      toast.success("Bericht is succesvol verzonden naar het dashboard!");
+      toast.success("Bericht is succesvol verzonden! Je ontvangt zo snel mogelijk een reactie.");
       form.reset();
     } catch (error) {
       setError("Er is een fout opgetreden bij het verzenden van je bericht. Probeer het later nog eens.");

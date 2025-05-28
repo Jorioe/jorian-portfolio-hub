@@ -110,6 +110,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
 
   const [project, setProject] = useState<AdminProject>(emptyProject);
   const [isLoading, setIsLoading] = useState(false);
+  const [techInput, setTechInput] = useState('');
   
   const categoryOptions: { label: string; value: CategoryType }[] = [
     { label: "Ontwikkeling", value: "development" },
@@ -259,7 +260,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
         ...newContent[index], 
         imageSize: value 
       };
-      console.log(`Wijziging van imageSize naar ${value} voor blok ${index}`);
+      // console.log(`Wijziging van imageSize naar ${value} voor blok ${index}`);
       return { ...prev, content: newContent };
     });
   };
@@ -271,7 +272,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
         ...newContent[index], 
         imagePosition: value 
       };
-      console.log(`Wijziging van imagePosition naar ${value} voor blok ${index}`);
+      // console.log(`Wijziging van imagePosition naar ${value} voor blok ${index}`);
       return { ...prev, content: newContent };
     });
   };
@@ -380,7 +381,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
         // We gebruiken nu een UUID in string format zodat het compatibel is met de database
         import('uuid').then(({ v4: uuidv4 }) => {
           projectToSave.id = uuidv4();
-          console.log('Nieuw project ID gegenereerd:', projectToSave.id);
+          // console.log('Nieuw project ID gegenereerd:', projectToSave.id);
           
           // Zorg ervoor dat er minimaal één content-blok is
           if (!projectToSave.content || projectToSave.content.length === 0) {
@@ -390,7 +391,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
           // Converteer naar het juiste formaat
           const projectForStorage = convertAdminProjectToProject(projectToSave);
           
-          console.log('Project dat wordt opgeslagen:', projectForStorage);
+          // console.log('Project dat wordt opgeslagen:', projectForStorage);
           
           // Gebruik de addProject functie uit de context
           addProject(projectForStorage);
@@ -421,7 +422,7 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
         // Converteer naar het juiste formaat
         const projectForStorage = convertAdminProjectToProject(projectToSave);
         
-        console.log('Project dat wordt bijgewerkt:', projectForStorage);
+        // console.log('Project dat wordt bijgewerkt:', projectForStorage);
         
         // Gebruik de updateProject functie uit de context
         updateProject(projectForStorage);
@@ -692,15 +693,64 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
           
           <div className="space-y-2">
             <Label>Technologieën (Optioneel)</Label>
-            <div className="flex flex-wrap gap-2">
-              <Input 
-                placeholder="Komma-gescheiden lijst van technologieën" 
-                value={project.technologies?.join(', ') || ''} 
-                onChange={(e) => {
-                  const techs = e.target.value.split(',').map(t => t.trim()).filter(Boolean);
-                  setProject(prev => ({ ...prev, technologies: techs }));
-                }}
-              />
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Voer een technologie in" 
+                  value={techInput || ''}
+                  onChange={(e) => setTechInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && techInput.trim()) {
+                      e.preventDefault();
+                      setProject(prev => ({
+                        ...prev,
+                        technologies: [...(prev.technologies || []), techInput.trim()]
+                      }));
+                      setTechInput('');
+                    }
+                  }}
+                />
+                <Button 
+                  type="button"
+                  onClick={() => {
+                    if (techInput.trim()) {
+                      setProject(prev => ({
+                        ...prev,
+                        technologies: [...(prev.technologies || []), techInput.trim()]
+                      }));
+                      setTechInput('');
+                    }
+                  }}
+                >
+                  Toevoegen
+                </Button>
+              </div>
+              
+              {(project.technologies && project.technologies.length > 0) ? (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {project.technologies.map((tech, index) => (
+                    <div 
+                      key={index}
+                      className="bg-primary/10 border border-primary/20 rounded-md px-2 py-0.5 text-xs flex items-center"
+                    >
+                      {tech}
+                      <button 
+                        className="ml-1 text-muted-foreground hover:text-destructive"
+                        onClick={() => {
+                          setProject(prev => ({
+                            ...prev,
+                            technologies: prev.technologies?.filter((_, i) => i !== index) || []
+                          }));
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Geen technologieën toegevoegd</p>
+              )}
             </div>
           </div>
           
@@ -855,15 +905,15 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                   
                                   {(block.type === 'flex-text-video') && (
                                     <>
-                                      <div className="mt-2">
+                                    <div className="mt-2">
                                         <Label htmlFor={`flex-video-text-${index}`}>Beschrijvende tekst</Label>
-                                        <Textarea 
+                                      <Textarea 
                                           id={`flex-video-text-${index}`} 
                                           value={block.content} 
                                           onChange={(e) => handleContentChange(index, 'content', e.target.value)}
                                           rows={3}
-                                        />
-                                      </div>
+                                      />
+                                    </div>
                                       
                                       <div className="mt-2 flex gap-4">
                                         <div className="flex-1">
@@ -892,12 +942,12 @@ export default function AdminProjectEditor({ specialProjectId }: { specialProjec
                                         )}
                                       </div>
                                       
-                                      <div className="mt-2">
+                                    <div className="mt-2">
                                         <Label htmlFor={`video-desc-${index}`}>Videobeschrijving</Label>
-                                        <Input 
+                                      <Input 
                                           id={`video-desc-${index}`} 
-                                          value={block.imgtext || ''} 
-                                          onChange={(e) => handleContentChange(index, 'imgtext', e.target.value)}
+                                        value={block.imgtext || ''} 
+                                        onChange={(e) => handleContentChange(index, 'imgtext', e.target.value)}
                                           placeholder="Beschrijving voor de video"
                                         />
                                       </div>
@@ -1253,7 +1303,7 @@ const convertAdminProjectToProject = (adminProject: AdminProject): Project => {
     })
   };
   
-  console.log('Geformatteerd project voor opslag:', formattedProject);
+  // console.log('Geformatteerd project voor opslag:', formattedProject);
   
   return formattedProject as Project;
 }; 
