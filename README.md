@@ -89,8 +89,9 @@ For admin functionality, follow the instructions in `ADMIN_SETUP.md` to:
 [![Supabase](https://img.shields.io/badge/Supabase-2.x-green.svg)](https://supabase.io/)
 [![React Query](https://img.shields.io/badge/React_Query-5.x-ff4154.svg)](https://tanstack.com/query/latest)
 [![React Router](https://img.shields.io/badge/React_Router-6.x-CA4245.svg)](https://reactrouter.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details. 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
